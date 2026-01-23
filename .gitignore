@@ -1,0 +1,93 @@
+####################################
+# GENERAL
+####################################
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+*.old
+*.pid
+
+####################################
+# ENV / SECRETS
+####################################
+.env
+.env.*
+!.env.example
+
+####################################
+# DOCKER
+####################################
+docker-compose.override.yml
+docker-compose.local.yml
+.env.docker
+.env.docker.*
+*.volume
+*.data
+
+####################################
+# LARAVEL (Backend)
+####################################
+/backend/vendor/
+/backend/node_modules/
+
+/backend/storage/*.key
+/backend/storage/*.log
+/backend/storage/logs/*
+/backend/storage/framework/cache/*
+/backend/storage/framework/sessions/*
+/backend/storage/framework/views/*
+/backend/storage/framework/testing/*
+/backend/storage/app/public/*
+!/backend/storage/app/public/.gitignore
+
+/backend/bootstrap/cache/*
+!/backend/bootstrap/cache/.gitignore
+
+/backend/.phpunit.result.cache
+/backend/phpunit.xml
+/backend/.env.testing
+
+####################################
+# NEXT.JS (Frontend)
+####################################
+/frontend/node_modules/
+/frontend/.next/
+/frontend/out/
+/frontend/.turbo/
+/frontend/.vercel/
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+/frontend/pnpm-debug.log*
+
+####################################
+# NEXT / FRONTEND ENV
+####################################
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+
+####################################
+# BUILD / DIST
+####################################
+dist/
+build/
+coverage/
+
+####################################
+# IDE / EDITORS
+####################################
+.idea/
+.vscode/
+*.iml
+
+####################################
+# OS / TEMP
+####################################
+*.cache
+*.lock
