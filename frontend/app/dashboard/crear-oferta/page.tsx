@@ -100,28 +100,28 @@ export default function CrearOfertaPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Título */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Título de la Oferta *</label>
+              <label className="block text-gray-900 font-semibold mb-2">Título de la Oferta *</label>
               <input
                 type="text"
                 name="titulo"
                 value={formData.titulo}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="ej: Desarrollador Full Stack PHP"
               />
             </div>
 
             {/* Descripción */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Descripción *</label>
+              <label className="block text-gray-900 font-semibold mb-2">Descripción *</label>
               <textarea
                 name="descripcion"
                 value={formData.descripcion}
                 onChange={handleChange}
                 required
                 rows={6}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                className="w-full px-4 py-2 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                 placeholder="Describe el puesto, responsabilidades, equipo, etc."
               />
             </div>
@@ -130,39 +130,39 @@ export default function CrearOfertaPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Sector */}
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Sector *</label>
+                <label className="block text-gray-900 font-semibold mb-2">Sector *</label>
                 <input
                   type="text"
                   name="sector"
                   value={formData.sector}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="ej: Tecnología, Finanzas, etc."
                 />
               </div>
 
               {/* Ubicación */}
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Ubicación</label>
+                <label className="block text-gray-900 font-semibold mb-2">Ubicación</label>
                 <input
                   type="text"
                   name="ubicacion"
                   value={formData.ubicacion}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="ej: Madrid, España"
                 />
               </div>
 
               {/* Tipo de Contrato */}
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Tipo de Contrato *</label>
+                <label className="block text-gray-900 font-semibold mb-2">Tipo de Contrato *</label>
                 <select
                   name="tipo_contrato"
                   value={formData.tipo_contrato}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="Full-time">Full-time</option>
                   <option value="Part-time">Part-time</option>
@@ -174,7 +174,7 @@ export default function CrearOfertaPage() {
 
               {/* Vacantes */}
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Vacantes *</label>
+                <label className="block text-gray-900 font-semibold mb-2">Vacantes *</label>
                 <input
                   type="number"
                   name="vacantes"
@@ -182,71 +182,71 @@ export default function CrearOfertaPage() {
                   onChange={handleChange}
                   required
                   min="1"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               {/* Salario Mínimo */}
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Salario Mínimo</label>
+                <label className="block text-gray-900 font-semibold mb-2">Salario Mínimo</label>
                 <input
                   type="number"
                   name="salario_min"
                   value={formData.salario_min}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="0"
                 />
               </div>
 
               {/* Salario Máximo */}
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Salario Máximo</label>
+                <label className="block text-gray-900 font-semibold mb-2">Salario Máximo</label>
                 <input
                   type="number"
                   name="salario_max"
                   value={formData.salario_max}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="0"
                 />
               </div>
 
               {/* Fecha de Cierre */}
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Fecha de Cierre</label>
+                <label className="block text-gray-900 font-semibold mb-2">Fecha de Cierre</label>
                 <input
                   type="date"
                   name="fecha_cierre"
                   value={formData.fecha_cierre}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
 
             {/* Requisitos */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Requisitos</label>
+              <label className="block text-gray-900 font-semibold mb-2">Requisitos</label>
               <textarea
                 name="requisitos"
                 value={formData.requisitos}
                 onChange={handleChange}
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                className="w-full px-4 py-2 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                 placeholder="Lista de requisitos (uno por línea)"
               />
             </div>
 
             {/* Beneficios */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Beneficios</label>
+              <label className="block text-gray-900 font-semibold mb-2">Beneficios</label>
               <textarea
                 name="beneficios"
                 value={formData.beneficios}
                 onChange={handleChange}
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                className="w-full px-4 py-2 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                 placeholder="Lista de beneficios (uno por línea)"
               />
             </div>

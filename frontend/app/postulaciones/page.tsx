@@ -48,7 +48,7 @@ function PostulacionesContent() {
 
       if (response.ok) {
         const data = await response.json();
-        setPostulaciones(data);
+        setPostulaciones(data.data || []);
       }
     } catch (error) {
       console.error('Error fetching postulaciones:', error);

@@ -20,8 +20,8 @@ interface OfertaEmpleo {
   titulo: string;
   descripcion: string;
   ubicacion: string;
-  salario_minimo: number;
-  salario_maximo: number;
+  salario_min: number;
+  salario_max: number;
   tipo_contrato: string;
   fecha_publicacion: string;
   empresa_id: number;
@@ -102,7 +102,7 @@ export default function Ofertas() {
           className="mb-12"
         >
           <h1 className="text-5xl font-bold text-gray-900 mb-2">Ofertas de Empleo</h1>
-          <p className="text-xl text-gray-600">Descubre las mejores oportunidades para tu carrera profesional</p>
+          <p className="text-xl text-gray-800">Descubre las mejores oportunidades para tu carrera profesional</p>
         </motion.div>
 
         {/* Filtros */}
@@ -115,13 +115,13 @@ export default function Ofertas() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Búsqueda */}
             <div className="relative">
-              <Search className="absolute left-4 top-4 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-4 top-4 w-5 h-5 text-gray-500" />
               <input
                 type="text"
                 placeholder="Buscar ofertas, empresas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full pl-12 pr-4 py-3 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
@@ -129,7 +129,7 @@ export default function Ofertas() {
             <select
               value={tipoFiltro}
               onChange={(e) => setTipoFiltro(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="px-4 py-3 bg-white text-gray-900 border border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               <option value="todos">Todos los tipos</option>
               <option value="Tiempo Completo">Tiempo Completo</option>
@@ -140,7 +140,7 @@ export default function Ofertas() {
           </div>
 
           {/* Resultados */}
-          <div className="mt-4 text-sm text-gray-600">
+          <div className="mt-4 text-sm text-gray-800">
             Se encontraron <span className="font-bold text-blue-600">{filteredOfertas.length}</span> ofertas
           </div>
         </motion.div>
@@ -149,12 +149,12 @@ export default function Ofertas() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="text-gray-600 mt-4">Cargando ofertas...</p>
+            <p className="text-gray-800 mt-4">Cargando ofertas...</p>
           </div>
         ) : filteredOfertas.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-2xl">
-            <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">No se encontraron ofertas con los filtros seleccionados</p>
+            <Briefcase className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+            <p className="text-gray-800 text-lg">No se encontraron ofertas con los filtros seleccionados</p>
           </div>
         ) : (
           <motion.div
@@ -182,22 +182,22 @@ export default function Ofertas() {
                   </Link>
                 </div>
 
-                <p className="text-gray-600 mb-6 line-clamp-2">{oferta.descripcion}</p>
+                <p className="text-gray-800 mb-6 line-clamp-2">{oferta.descripcion}</p>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="flex items-center space-x-2 text-gray-600">
+                  <div className="flex items-center space-x-2 text-gray-800">
                     <MapPin className="w-5 h-5 text-blue-600" />
                     <span>{oferta.ubicacion}</span>
                   </div>
                   
-                  <div className="flex items-center space-x-2 text-gray-600">
+                  <div className="flex items-center space-x-2 text-gray-800">
                     <Briefcase className="w-5 h-5 text-blue-600" />
                     <span>{oferta.tipo_contrato}</span>
                   </div>
                   
-                  <div className="flex items-center space-x-2 text-gray-600">
+                  <div className="flex items-center space-x-2 text-gray-800">
                     <DollarSign className="w-5 h-5 text-blue-600" />
-                    <span>${oferta.salario_minimo.toLocaleString()} - ${oferta.salario_maximo.toLocaleString()}</span>
+                    <span>${oferta.salario_min?.toLocaleString() || 'No especificado'} - ${oferta.salario_max?.toLocaleString() || 'No especificado'}</span>
                   </div>
                   
                   <div className="flex items-center space-x-2 text-gray-600">
