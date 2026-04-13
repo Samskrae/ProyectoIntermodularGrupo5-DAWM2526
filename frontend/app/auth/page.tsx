@@ -154,9 +154,9 @@ export default function Auth() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.1 }}
               >
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre Completo</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">Nombre Completo</label>
                 <div className="relative">
-                  <User className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                  <User className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" />
                   <input
                     type="text"
                     name="nombre"
@@ -164,7 +164,7 @@ export default function Auth() {
                     onChange={handleChange}
                     placeholder="Tu nombre"
                     required={!isLogin}
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full pl-12 pr-4 py-3 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
               </motion.div>
@@ -176,9 +176,9 @@ export default function Auth() {
               animate={{ opacity: 1 }}
               transition={{ delay: !isLogin ? 0.15 : 0.1 }}
             >
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Correo Electrónico</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">Correo Electrónico</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" />
                 <input
                   type="email"
                   name="email"
@@ -186,7 +186,7 @@ export default function Auth() {
                   onChange={handleChange}
                   placeholder="tu@email.com"
                   required
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full pl-12 pr-4 py-3 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
             </motion.div>
@@ -197,9 +197,9 @@ export default function Auth() {
               animate={{ opacity: 1 }}
               transition={{ delay: !isLogin ? 0.2 : 0.15 }}
             >
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Contraseña</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">Contraseña</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" />
                 <input
                   type="password"
                   name="password"
@@ -207,7 +207,7 @@ export default function Auth() {
                   onChange={handleChange}
                   placeholder="Mínimo 8 caracteres"
                   required
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full pl-12 pr-4 py-3 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
             </motion.div>
@@ -219,9 +219,9 @@ export default function Auth() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.25 }}
               >
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Confirmar Contraseña</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">Confirmar Contraseña</label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                  <Lock className="absolute left-4 top-3.5 w-5 h-5 text-gray-500" />
                   <input
                     type="password"
                     name="confirmPassword"
@@ -229,7 +229,7 @@ export default function Auth() {
                     onChange={handleChange}
                     placeholder="Confirma tu contraseña"
                     required={!isLogin}
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full pl-12 pr-4 py-3 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
               </motion.div>
@@ -250,7 +250,7 @@ export default function Auth() {
                   onChange={handleChange}
                   className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
                 />
-                <label className="text-sm text-gray-600">
+                <label className="text-sm text-gray-800 font-medium">
                   Acepto los{' '}
                   <a href="#" className="text-blue-600 hover:underline font-semibold">
                     términos y condiciones
@@ -283,7 +283,7 @@ export default function Auth() {
 
           {/* Enlace alternativo */}
           {isLogin && (
-            <p className="text-center text-gray-600 text-sm mt-6">
+            <p className="text-center text-gray-800 text-sm mt-6">
               ¿No tienes cuenta?{' '}
               <button
                 onClick={() => {
@@ -300,7 +300,7 @@ export default function Auth() {
 
         {/* Registro empresa link */}
         <div className="text-center mt-6">
-          <p className="text-gray-600">
+          <p className="text-gray-800">
             ¿Eres una empresa?{' '}
             <Link href="/registro-empresa" className="text-blue-600 hover:underline font-semibold">
               Regístrate como empresa
