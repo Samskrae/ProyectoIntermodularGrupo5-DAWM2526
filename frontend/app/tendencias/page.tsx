@@ -83,13 +83,13 @@ export default function Tendencias() {
           className="mb-12"
         >
           <h1 className="text-5xl font-bold text-gray-900 mb-2">Tendencias del Mercado</h1>
-          <p className="text-xl text-gray-600">Análisis de tecnologías y habilidades más demandadas</p>
+          <p className="text-xl text-gray-800">Análisis de tecnologías y habilidades más demandadas</p>
         </motion.div>
 
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="text-gray-600 mt-4">Cargando tendencias...</p>
+            <p className="text-gray-800 mt-4">Cargando tendencias...</p>
           </div>
         ) : (
           <motion.div
@@ -184,7 +184,7 @@ export default function Tendencias() {
                       </div>
                     </div>
 
-                    <p className="text-gray-600 text-sm mb-4">{tendencia.descripcion}</p>
+                    <p className="text-gray-800 text-sm mb-4">{tendencia.descripcion}</p>
 
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
@@ -194,8 +194,8 @@ export default function Tendencias() {
                     </div>
 
                     <div className="mt-4 pt-4 border-t border-gray-200">
-                      <p className="text-xs text-gray-500">
-                        Tendencia: <span className="font-semibold text-gray-700">{tendencia.tendencia}</span>
+                      <p className="text-xs text-gray-700">
+                        Tendencia: <span className="font-semibold text-gray-900">{tendencia.tendencia}</span>
                       </p>
                     </div>
                   </motion.div>

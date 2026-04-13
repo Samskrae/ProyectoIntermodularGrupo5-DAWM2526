@@ -24,3 +24,57 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ============================================
+   FORM INPUTS AND TEXTAREAS STYLING
+   ============================================ */
+
+/* Input fields base styles */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select {
+  @apply text-gray-900;
+}
+
+/* Placeholder styling */
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;
+}
+
+/* Input focus state */
+input:focus,
+textarea:focus,
+select:focus {
+  @apply text-gray-900;
+}
+
+/* White background inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select {
+  @apply bg-white text-gray-900;
+}
+
+/* ============================================
+   TEXT AND HEADINGS CONTRAST
+   ============================================ */
+
+/* Labels styling */
+label {
+  @apply text-gray-700 font-semibold;
+}
