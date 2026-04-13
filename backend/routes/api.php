@@ -7,7 +7,13 @@ use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\OfertaController;
 use App\Http\Controllers\PostulacionController;
+use App\Http\Controllers\TecnologiaController;
 use App\Http\Controllers\TendenciaMercadoController;
+
+// Health check endpoint
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok', 'message' => 'Backend is running']);
+});
 
 // Public auth routes
 Route::post('/register-alumno', [AuthController::class, 'registerAlumno']);
@@ -56,3 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('tendencias', [TendenciaMercadoController::class, 'index']);
 Route::get('tendencias/{id}', [TendenciaMercadoController::class, 'show']);
 Route::get('tendencias/tecnologia/{tecnologiaId}', [TendenciaMercadoController::class, 'byTecnologia']);
+
+// Rutas de Tecnologías
+Route::get('/tecnologias', [TecnologiaController::class, 'index']);
+Route::get('/tecnologias/{id}', [TecnologiaController::class, 'show']);
