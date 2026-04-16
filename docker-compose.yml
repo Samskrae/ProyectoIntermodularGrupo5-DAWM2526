@@ -3,7 +3,8 @@ version: '3.9'
 services:
   backend:
     build:
-      context: ./docker/php
+      context: .
+      dockerfile: docker/php/Dockerfile
     container_name: laravel-backend
     volumes:
       - ./backend:/var/www/html
@@ -12,7 +13,7 @@ services:
       - "8000:8000"
     depends_on:
       - db
-    command: php artisan serve --host=0.0.0.0 --port=8000
+    command: sh -c "php artisan migrate --force || true; php -d opcache.enable=0 -d opcache.enable_cli=0 -d opcache.jit_buffer_size=0 -S 0.0.0.0:8000 -t public"
 
   frontend:
     image: node:20
