@@ -1,11 +1,9 @@
-version: '3.9'
-
 services:
   backend:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    container_name: laravel-backend
+    container_name: backend
     volumes:
       - ./backend:/var/www/html
     working_dir: /var/www/html
@@ -17,14 +15,16 @@ services:
 
   frontend:
     image: node:20
-    container_name: next-frontend
+    container_name: frontend
     working_dir: /app
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - ~/.npm:/root/.npm  
     ports:
       - "3000:3000"
     command: sh -c "npm install && npm run dev"
+    environment:
+      - NODE_ENV=development
 
   db:
     image: mysql:8.0
