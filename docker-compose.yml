@@ -19,12 +19,14 @@ services:
     working_dir: /app
     volumes:
       - ./frontend:/app
-      - ~/.npm:/root/.npm  
+      - ~/.npm:/root/.npm
     ports:
       - "3000:3000"
     command: sh -c "npm install && npm run dev"
     environment:
       - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+      - NEXT_TELEMETRY_DISABLED=1
 
   db:
     image: mysql:8.0
