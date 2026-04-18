@@ -10,6 +10,7 @@ class OfertaEmpleo extends Model
     use HasFactory;
 
     protected $table = 'OFERTA_EMPLEO';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
         'empresa_id',

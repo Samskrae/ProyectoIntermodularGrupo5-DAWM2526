@@ -36,15 +36,17 @@ Siga estos pasos para levantar el entorno completo utilizando Docker.
 
 ### 1. Clonación del Repositorio
 ```bash
-git clone [https://github.com/Samskrae/ProyectoIntermodularGrupo5-DAWM2526.git](https://github.com/Samskrae/ProyectoIntermodularGrupo5-DAWM2526.git)
+git clone https://github.com/Samskrae/ProyectoIntermodularGrupo5-DAWM2526.git
 cd ProyectoIntermodularGrupo5-DAWM2526
 ```
 
-### 2. Despliegue de Infraestructura
+### 2. Despliegue Inicial
 ```bash
 # Construir e iniciar contenedores en segundo plano
 docker-compose up -d --build
 ```
+
+### 3. Despliegue Backend
 # Generar clave de aplicación y ejecutar migraciones con datos de prueba
 ```bash
 docker-compose exec -T backend php artisan key:generate
@@ -53,6 +55,16 @@ docker-compose exec -T backend php artisan migrate --seed
 # En caso de necesitar limpiar la caché de rutas o configuración
 ```bash
 docker-compose exec -T backend php artisan optimize:clear
+```
+
+### 4. Despliegue de Frontend (Parte Opcional)
+# Opcional: Reparar vulnerabilidades de dependencias si es necesario
+```bash
+docker-compose exec -T frontend npm audit fix --force
+```
+# En caso de errores visuales o de compilación, limpiar la caché de Next.js
+```bash
+docker-compose exec -T next-frontend rm -rf .next
 ```
 
 ## 👥 Equipo de Desarrollo

@@ -46,7 +46,7 @@ class OfertaController extends Controller
      */
     public function show($id): JsonResponse
     {
-        $oferta = OfertaEmpleo::with(['empresa', 'postulaciones', 'tecnologias'])->find($id);
+        $oferta = OfertaEmpleo::with(['empresa', 'postulaciones.alumno', 'tecnologias'])->find($id);
 
         if (!$oferta) {
             return response()->json(['error' => 'Oferta no encontrada'], 404);

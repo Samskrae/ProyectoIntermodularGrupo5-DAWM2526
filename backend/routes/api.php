@@ -33,17 +33,17 @@ Route::apiResource('alumnos', AlumnoController::class);
 // Rutas de Empresas
 Route::apiResource('empresas', EmpresaController::class);
 
-// Rutas públicas de Ofertas
-Route::get('/ofertas', [OfertaController::class, 'index']);
-Route::get('/ofertas/{id}', [OfertaController::class, 'show']);
-
-// Rutas protegidas de Ofertas (solo empresas)
+// 1. Primero las rutas específicas/estáticas
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/mis-ofertas', [OfertaController::class, 'misOfertas']); 
     Route::post('/ofertas', [OfertaController::class, 'store']);
     Route::put('/ofertas/{id}', [OfertaController::class, 'update']);
     Route::delete('/ofertas/{id}', [OfertaController::class, 'destroy']);
-    Route::get('/mis-ofertas', [OfertaController::class, 'misOfertas']);
 });
+
+// 2. Después las rutas con parámetros variables
+Route::get('/ofertas', [OfertaController::class, 'index']);
+Route::get('/ofertas/{id}', [OfertaController::class, 'show']); 
 
 // Rutas protegidas de Postulaciones
 Route::middleware('auth:sanctum')->group(function () {
