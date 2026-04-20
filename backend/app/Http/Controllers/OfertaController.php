@@ -10,17 +10,9 @@ use Illuminate\Http\JsonResponse;
 
 class OfertaController extends Controller
 {
-    /**
-     * Listar todas las ofertas activas con filtros
-     */
     public function index(Request $request): JsonResponse
     {
         $query = OfertaEmpleo::where('estado', 'activa')->with(['empresa', 'tecnologias']);
-
-        // Filtrar por sector
-        if ($request->has('sector')) {
-            $query->where('sector', $request->sector);
-        }
 
         // Filtrar por tipo de contrato
         if ($request->has('tipo_contrato')) {
@@ -32,7 +24,7 @@ class OfertaController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('titulo', 'like', "%$search%")
-                  ->orWhere('descripcion', 'like', "%$search%");
+                    ->orWhere('descripcion', 'like', "%$search%");
             });
         }
 
@@ -41,9 +33,6 @@ class OfertaController extends Controller
         return response()->json($ofertas);
     }
 
-    /**
-     * Ver detalle de una oferta específica
-     */
     public function show($id): JsonResponse
     {
         $oferta = OfertaEmpleo::with(['empresa', 'postulaciones.alumno', 'tecnologias'])->find($id);
@@ -52,12 +41,9 @@ class OfertaController extends Controller
             return response()->json(['error' => 'Oferta no encontrada'], 404);
         }
 
-        return response()->json(['data' => $oferta]);
+        return response()->json($oferta);
     }
 
-    /**
-     * Crear una nueva oferta (solo empresas autenticadas)
-     */
     public function store(Request $request): JsonResponse
     {
         $empresa = auth()->user();
@@ -70,7 +56,6 @@ class OfertaController extends Controller
             'descripcion' => 'required|string',
             'tipo_contrato' => 'required|string|in:Tiempo completo,Tiempo parcial,Contrato temporal,Freelance,Prácticas',
             'ubicacion' => 'nullable|string',
-            'sector' => 'nullable|string',
             'salario_min' => 'nullable|numeric|min:0',
             'salario_max' => 'nullable|numeric|min:0',
             'vacantes' => 'nullable|integer|min:1',
@@ -84,7 +69,6 @@ class OfertaController extends Controller
             'descripcion' => $validated['descripcion'],
             'tipo_contrato' => $validated['tipo_contrato'],
             'ubicacion' => $validated['ubicacion'] ?? null,
-            'sector' => $validated['sector'] ?? null,
             'salario_min' => $validated['salario_min'] ?? null,
             'salario_max' => $validated['salario_max'] ?? null,
             'vacantes' => $validated['vacantes'] ?? 1,
@@ -95,12 +79,9 @@ class OfertaController extends Controller
             $oferta->tecnologias()->sync($validated['tecnologias']);
         }
 
-        return response()->json(['data' => $oferta->load('tecnologias')], 201);
+        return response()->json($oferta->load('tecnologias'), 201);
     }
 
-    /**
-     * Actualizar una oferta (solo propietario)
-     */
     public function update(Request $request, $id): JsonResponse
     {
         $oferta = OfertaEmpleo::find($id);
@@ -116,7 +97,6 @@ class OfertaController extends Controller
         $validated = $request->validate([
             'titulo' => 'string|max:255',
             'descripcion' => 'string',
-            'sector' => 'string|max:100',
             'tipo_contrato' => 'string|in:Tiempo completo,Tiempo parcial,Contrato temporal,Freelance,Prácticas',
             'estado' => 'string|in:activa,cerrada,pausada',
             'ubicacion' => 'nullable|string|max:255',
@@ -126,8 +106,6 @@ class OfertaController extends Controller
             'fecha_cierre' => 'nullable|date_format:Y-m-d',
             'requisitos' => 'nullable|string',
             'beneficios' => 'nullable|string',
-        ], [
-            'tipo_contrato.in' => 'El tipo de contrato debe ser uno de: Tiempo completo, Tiempo parcial, Contrato temporal, Freelance, Prácticas',
         ]);
 
         $oferta->update($validated);
@@ -135,9 +113,6 @@ class OfertaController extends Controller
         return response()->json($oferta);
     }
 
-    /**
-     * Eliminar una oferta (solo propietario)
-     */
     public function destroy($id): JsonResponse
     {
         $oferta = OfertaEmpleo::find($id);
@@ -155,9 +130,6 @@ class OfertaController extends Controller
         return response()->json(['message' => 'Oferta eliminada']);
     }
 
-    /**
-     * Obtener mis ofertas (solo empresas)
-     */
     public function misOfertas(): JsonResponse
     {
         $empresa = auth()->user();
@@ -170,6 +142,6 @@ class OfertaController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return response()->json(['data' => $ofertas]);
+        return response()->json($ofertas);
     }
 }
