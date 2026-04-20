@@ -4,14 +4,17 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import Navigation from '@/app/components/Navigation';
-import ProtectedRoute from '@/app/components/ProtectedRoute';
-import { ArrowLeft, Briefcase, MapPin, DollarSign, Calendar, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Briefcase, MapPin, DollarSign, Calendar, CheckCircle, Lock, Tag } from 'lucide-react';
+
+interface Tecnologia {
+  id: number;
+  nombre: string;
+}
 
 interface Oferta {
   id: number;
   titulo: string;
   descripcion: string;
-  sector: string;
   ubicacion?: string;
   tipo_contrato: string;
   salario_min?: number;
@@ -21,6 +24,8 @@ interface Oferta {
   requisitos?: string;
   beneficios?: string;
   estado: string;
+  created_at: string; // Añadida para la fecha
+  tecnologias?: Tecnologia[]; // Añadida para las etiquetas
   empresa: {
     id: number;
     nombre_comercial: string;
@@ -41,7 +46,9 @@ export default function OfertaDetailPage() {
   const ofertaId = params.id as string;
 
   useEffect(() => {
-    fetchOferta();
+    if (ofertaId) {
+      fetchOferta();
+    }
   }, [ofertaId]);
 
   const fetchOferta = async () => {
@@ -51,7 +58,6 @@ export default function OfertaDetailPage() {
         const responseData = await response.json();
         setOferta(responseData.data || responseData);
       } else {
-        console.error('Error: Oferta no encontrada o error en el servidor');
         setOferta(null);
       }
     } catch (error) {
@@ -64,8 +70,7 @@ export default function OfertaDetailPage() {
 
   const handleAplicar = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (userType !== 'alumno') {
+    if (!user || userType !== 'alumno') {
       setMensaje('Solo los alumnos pueden postularse');
       return;
     }
@@ -94,191 +99,169 @@ export default function OfertaDetailPage() {
         setMensaje('Error al enviar la postulación');
       }
     } catch (error) {
-      console.error('Error applying:', error);
       setMensaje('Error al enviar la postulación');
     } finally {
       setAplicando(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <Navigation />
-        <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-          <p className="text-gray-800">Cargando...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="min-h-screen bg-gray-50 text-center py-20">Cargando oferta...</div>
+  );
 
-  if (!oferta) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <Navigation />
-        <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-          <p className="text-gray-800 text-lg">Oferta no encontrada</p>
-        </div>
-      </div>
-    );
-  }
+  if (!oferta) return (
+    <div className="min-h-screen bg-gray-50 text-center py-20">
+      <h2 className="text-2xl font-bold">Oferta no encontrada</h2>
+      <button onClick={() => router.push('/ofertas')} className="text-blue-600 mt-4 underline">Volver</button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <Navigation />
 
       <div className="max-w-4xl mx-auto px-4 py-12">
-        {/* Botón atrás */}
         <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6"
+          onClick={() => router.push('/ofertas')}
+          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 font-medium"
         >
           <ArrowLeft size={20} />
-          Volver
+          Volver a todas las ofertas
         </button>
 
         {/* Header de oferta */}
-        <div className="bg-white rounded-lg shadow-md p-8 mb-8">
-          <div className="mb-4">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">{oferta.titulo}</h1>
-            <p className="text-xl text-blue-600 font-semibold">{oferta.empresa.nombre_comercial}</p>
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <div className="mb-6">
+            <h1 className="text-4xl font-extrabold text-gray-900 mb-2">{oferta.titulo}</h1>
+            <p className="text-xl text-blue-600 font-bold">{oferta.empresa.nombre_comercial}</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            {oferta.ubicacion && (
-              <div className="flex items-center gap-2">
-                <MapPin size={20} className="text-blue-500" />
-                <div>
-                  <p className="text-xs text-gray-700">Ubicación</p>
-                  <p className="font-semibold text-gray-900">{oferta.ubicacion}</p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <Briefcase size={20} className="text-blue-500" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
+            <div className="flex items-center gap-3">
+              <MapPin size={22} className="text-blue-500" />
               <div>
-                <p className="text-xs text-gray-700">Tipo</p>
-                <p className="font-semibold text-gray-900">{oferta.tipo_contrato}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">Ubicación</p>
+                <p className="font-semibold text-gray-800">{oferta.ubicacion || 'Remoto'}</p>
               </div>
             </div>
 
-            {oferta.salario_min && oferta.salario_max && (
-              <div className="flex items-center gap-2">
-                <DollarSign size={20} className="text-green-500" />
-                <div>
-                  <p className="text-xs text-gray-700">Salario</p>
-                  <p className="font-semibold text-gray-900">${oferta.salario_min} - ${oferta.salario_max}</p>
-                </div>
+            <div className="flex items-center gap-3">
+              <Briefcase size={22} className="text-blue-500" />
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">Contrato</p>
+                <p className="font-semibold text-gray-800">{oferta.tipo_contrato}</p>
               </div>
-            )}
+            </div>
 
-            {oferta.fecha_cierre && (
-              <div className="flex items-center gap-2">
-                <Calendar size={20} className="text-orange-500" />
-                <div>
-                  <p className="text-xs text-gray-700">Cierra</p>
-                  <p className="font-semibold text-gray-900">{new Date(oferta.fecha_cierre).toLocaleDateString()}</p>
-                </div>
+            <div className="flex items-center gap-3">
+              <DollarSign size={22} className="text-green-500" />
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">Salario</p>
+                <p className="font-semibold text-gray-800">
+                  {new Intl.NumberFormat('es-ES').format(oferta.salario_min || 0)}€
+                  {oferta.salario_max && ` - ${new Intl.NumberFormat('es-ES').format(oferta.salario_max)}€`}
+                </p>
               </div>
+            </div>
+          </div>
+
+          {/* Tecnologías como Badges */}
+          <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
+            {oferta.tecnologias && oferta.tecnologias.length > 0 ? (
+              oferta.tecnologias.map((tech) => (
+                <span key={tech.id} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-bold shadow-sm flex items-center gap-1">
+                  <Tag size={14} />
+                  {tech.nombre}
+                </span>
+              ))
+            ) : (
+              <span className="text-gray-400 text-sm italic">Sin tecnologías especificadas</span>
             )}
           </div>
 
-          <div className="flex gap-2">
-            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-              {oferta.sector}
-            </span>
-            <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
-              {oferta.vacantes} vacante{oferta.vacantes > 1 ? 's' : ''}
-            </span>
+          {/* Vacantes y Fecha en texto normal */}
+          <div className="mt-4 flex flex-wrap items-center gap-4 text-gray-600 text-sm">
+            {oferta.vacantes > 0 && (
+              <div className="flex items-center gap-1">
+                <span className="font-bold text-gray-900">{oferta.vacantes}</span>
+                {oferta.vacantes === 1 ? 'vacante disponible' : 'vacantes disponibles'}
+              </div>
+            )}
+            <span className="hidden sm:inline text-gray-300">|</span>
+            <div className="flex items-center gap-1 italic">
+              Publicado el {new Date(oferta.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Contenido principal */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Descripción */}
-            <div className="bg-white rounded-lg shadow-md p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Descripción del Puesto</h2>
-              <p className="text-gray-800 whitespace-pre-wrap">{oferta.descripcion}</p>
+            <div className="bg-white rounded-xl shadow-md p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 border-b pb-2">Descripción del Puesto</h2>
+              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{oferta.descripcion}</p>
             </div>
 
-            {/* Requisitos */}
             {oferta.requisitos && (
-              <div className="bg-white rounded-lg shadow-md p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Requisitos</h2>
-                <p className="text-gray-800 whitespace-pre-wrap">{oferta.requisitos}</p>
-              </div>
-            )}
-
-            {/* Beneficios */}
-            {oferta.beneficios && (
-              <div className="bg-white rounded-lg shadow-md p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Beneficios</h2>
-                <div className="space-y-2">
-                  {oferta.beneficios.split('\n').map((beneficio, idx) => (
-                    <div key={idx} className="flex items-start gap-3">
-                      <CheckCircle size={20} className="text-green-500 mt-1 flex-shrink-0" />
-                      <p className="text-gray-800">{beneficio}</p>
-                    </div>
-                  ))}
-                </div>
+              <div className="bg-white rounded-xl shadow-md p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 border-b pb-2">Requisitos</h2>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{oferta.requisitos}</p>
               </div>
             )}
           </div>
 
-          {/* Sidebar con formulario de postulación */}
-          <ProtectedRoute userType="alumno">
-            <div className="bg-white rounded-lg shadow-md p-8 h-fit sticky top-24">
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl shadow-xl p-8 h-fit sticky top-24 border border-blue-100">
               {aplicado ? (
-                <div className="text-center">
-                  <CheckCircle size={48} className="text-green-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">¡Postulación Enviada!</h3>
-                  <p className="text-gray-800 mb-4">
-                    Tu postulación ha sido enviada exitosamente. La empresa revisará tu solicitud pronto.
-                  </p>
+                <div className="text-center py-4">
+                  <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle size={32} className="text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">¡Todo listo!</h3>
+                  <p className="text-gray-600 text-sm">Tu postulación está en manos de la empresa.</p>
                 </div>
               ) : (
                 <>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">Postúlate Ahora</h3>
-                  <form onSubmit={handleAplicar} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-2">
-                        Carta de Presentación (Opcional)
-                      </label>
-                      <textarea
-                        value={cartaPresentacion}
-                        onChange={(e) => setCartaPresentacion(e.target.value)}
-                        placeholder="Cuéntanos por qué eres el candidato ideal para este puesto..."
-                        className="w-full px-4 py-3 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                        rows={6}
-                      />
-                    </div>
-
-                    {mensaje && (
-                      <div
-                        className={`p-3 rounded-lg text-sm ${
-                          aplicado
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {mensaje}
+                  <h3 className="text-2xl font-bold text-gray-900 mb-6">Postulación</h3>
+                  {userType === 'alumno' ? (
+                    <form onSubmit={handleAplicar} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Carta de presentación</label>
+                        <textarea
+                          value={cartaPresentacion}
+                          onChange={(e) => setCartaPresentacion(e.target.value)}
+                          placeholder="Convénceles: ¿Por qué tú?"
+                          className="w-full px-4 py-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition resize-none"
+                          rows={5}
+                        />
                       </div>
-                    )}
-
-                    <button
-                      type="submit"
-                      disabled={aplicando}
-                      className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 transition"
-                    >
-                      {aplicando ? 'Enviando...' : 'Enviar Postulación'}
-                    </button>
-                  </form>
+                      <button
+                        type="submit"
+                        disabled={aplicando}
+                        className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 disabled:bg-gray-300 shadow-lg transition"
+                      >
+                        {aplicando ? 'Enviando...' : 'Aplicar a esta oferta'}
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="text-center space-y-4">
+                      <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto">
+                        <Lock size={20} className="text-gray-500" />
+                      </div>
+                      <p className="text-gray-600 text-sm">
+                        {userType === 'empresa' ? "Las empresas no pueden postularse." : "Inicia sesión como alumno."}
+                      </p>
+                      {!user && (
+                        <button onClick={() => router.push('/login-alumno')} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition">
+                          Ir al Login
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {mensaje && !aplicado && <p className="mt-4 text-center text-sm font-medium text-red-600 bg-red-50 p-2 rounded-lg">{mensaje}</p>}
                 </>
               )}
             </div>
-          </ProtectedRoute>
+          </div>
         </div>
       </div>
     </div>

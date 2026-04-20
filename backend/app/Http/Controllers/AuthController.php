@@ -65,14 +65,12 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'nombre_comercial' => 'required|string|unique:EMPRESA',
-            'sector' => 'nullable|string',
             'email' => 'required|email|unique:EMPRESA',
             'password' => 'required|min:8|confirmed',
         ]);
 
         $empresa = Empresa::create([
             'nombre_comercial' => $validated['nombre_comercial'],
-            'sector' => $validated['sector'] ?? 'No especificado',
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);

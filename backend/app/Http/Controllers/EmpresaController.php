@@ -25,7 +25,6 @@ class EmpresaController extends Controller
     {
         $validated = $request->validate([
             'nombre_comercial' => 'required|string',
-            'sector' => 'nullable|string',
             'contacto' => 'nullable|string',
         ]);
 
@@ -42,7 +41,6 @@ class EmpresaController extends Controller
 
         $validated = $request->validate([
             'nombre_comercial' => 'sometimes|string',
-            'sector' => 'sometimes|nullable|string',
             'contacto' => 'sometimes|nullable|string',
         ]);
 

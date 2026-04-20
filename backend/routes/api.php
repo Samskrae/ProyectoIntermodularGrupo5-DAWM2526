@@ -35,7 +35,7 @@ Route::apiResource('empresas', EmpresaController::class);
 
 // 1. Primero las rutas específicas/estáticas
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/mis-ofertas', [OfertaController::class, 'misOfertas']); 
+    Route::get('/mis-ofertas', [OfertaController::class, 'misOfertas']);
     Route::post('/ofertas', [OfertaController::class, 'store']);
     Route::put('/ofertas/{id}', [OfertaController::class, 'update']);
     Route::delete('/ofertas/{id}', [OfertaController::class, 'destroy']);
@@ -43,7 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // 2. Después las rutas con parámetros variables
 Route::get('/ofertas', [OfertaController::class, 'index']);
-Route::get('/ofertas/{id}', [OfertaController::class, 'show']); 
+Route::get('/ofertas/{id}', [OfertaController::class, 'show']);
 
 // Rutas protegidas de Postulaciones
 Route::middleware('auth:sanctum')->group(function () {
@@ -51,7 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/postulaciones', [PostulacionController::class, 'store']);
     Route::get('/mis-postulaciones', [PostulacionController::class, 'misPostulaciones']);
     Route::delete('/postulaciones/{id}/retirar', [PostulacionController::class, 'retirar']);
-    
+
     // Empresa viendo postulaciones
     Route::get('/postulaciones-mis-ofertas', [PostulacionController::class, 'postulacionesAMisOfertas']);
     Route::get('/ofertas/{oferta_id}/postulaciones', [PostulacionController::class, 'porOferta']);
