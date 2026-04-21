@@ -25,6 +25,6 @@ class Empresa extends Authenticatable
     // Relación con las ofertas (Importante para que la empresa gestione sus vacantes)
     public function ofertas()
     {
-        return $this->hasMany(OfertaEmpleo::class, 'empresa_id');
+        return $this->hasMany(Oferta::class, 'empresa_id');
     }
 }
