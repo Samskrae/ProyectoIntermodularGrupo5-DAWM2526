@@ -11,7 +11,17 @@ class TendenciaMercado extends Model
 
     protected $table = 'TENDENCIA_MERCADO';
 
-    protected $fillable = ['tecnologia_id','fecha_analisis','demanda_score','fuente_scraping'];
+    // Fuera fuente_scraping, nos quedamos con el núcleo de la gráfica
+    protected $fillable = [
+        'tecnologia_id',
+        'fecha_analisis',
+        'demanda_score'
+    ];
+
+    protected $casts = [
+        'fecha_analisis' => 'date',
+        'demanda_score' => 'integer'
+    ];
 
     public function tecnologia()
     {
