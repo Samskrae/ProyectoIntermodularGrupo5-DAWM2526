@@ -10,8 +10,10 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
-    command: sh -c "php artisan migrate --force || true; php -d opcache.enable=0 -d opcache.enable_cli=0 -d opcache.jit_buffer_size=0 -S 0.0.0.0:8000 -t public"
+      db:
+        condition: service_healthy # El backend esperará a que la DB esté LISTA, no solo encendida
+    command: sh -c "php artisan migrate --force; php -S 0.0.0.0:8000 -t public"
+    # Nota: He quitado el || true para que si la migración falla, sepas POR QUÉ falló.
 
   frontend:
     image: node:20
@@ -31,6 +33,7 @@ services:
   db:
     image: mysql:8.0
     container_name: mysql-db
+    restart: always # Añadido para mayor estabilidad
     environment:
       MYSQL_DATABASE: laravel
       MYSQL_USER: laravel
@@ -39,7 +42,20 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - dbdata:/var/lib/mysql
-
-volumes:
-  dbdata:
+      # Cambiamos a un volumen de carpeta local para que PUEDAS VER los datos en tu PC
+      - ./docker/mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${MYSQL_ROOT_PASSWORD}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
