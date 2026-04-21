@@ -3,13 +3,20 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, X } from 'lucide-react';
+import { ArrowLeft, Save, Briefcase, MapPin, DollarSign, FileText, Tag, AlertCircle, Users, Activity } from 'lucide-react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 interface Tecnologia {
   id: number;
   nombre: string;
 }
+
+const COMUNIDADES = [
+  "Andalucía", "Aragón", "Asturias", "Baleares", "Canarias", "Cantabria",
+  "Castilla-La Mancha", "Castilla y León", "Cataluña", "Comunidad Valenciana",
+  "Extremadura", "Galicia", "Madrid", "Murcia", "Navarra", "País Vasco", "La Rioja", "Ceuta", "Melilla", "Remoto"
+];
 
 export default function CrearOferta() {
   const { user, userType, token } = useAuth();
@@ -22,7 +29,9 @@ export default function CrearOferta() {
     salario_min: '',
     salario_max: '',
     tipo_contrato: 'Tiempo completo',
-    ubicacion: '',
+    ubicacion: 'Madrid',
+    vacantes: '1',
+    estado: 'activa',
     tecnologias: [] as number[]
   });
 
@@ -32,19 +41,16 @@ export default function CrearOferta() {
       return;
     }
     fetchTecnologias();
-  }, [user, userType, router]);
+  }, [user, userType]);
 
   const fetchTecnologias = async () => {
     try {
       const response = await fetch('http://localhost:8000/api/tecnologias', {
-        headers: {
-          'Accept': 'application/json'
-        }
+        headers: { 'Accept': 'application/json' }
       });
-
       if (response.ok) {
         const data = await response.json();
-        setTecnologias(data.data || []);
+        setTecnologias(data.data || data);
       }
     } catch (error) {
       console.error('Error fetching tecnologias:', error);
@@ -53,10 +59,18 @@ export default function CrearOferta() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const formatCurrencyInput = (value: string) => {
+    const numericValue = value.replace(/\D/g, "");
+    return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  const handleSalarioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const numericValue = value.replace(/\D/g, "");
+    setFormData(prev => ({ ...prev, [name]: numericValue }));
   };
 
   const handleTecnologiaToggle = (tecnologiaId: number) => {
@@ -72,22 +86,23 @@ export default function CrearOferta() {
     e.preventDefault();
     setLoading(true);
 
-    // Validación frontend
     if (formData.tecnologias.length === 0) {
-      alert('Debes seleccionar al menos una tecnología requerida.');
+      alert('Debes seleccionar al menos una tecnología.');
       setLoading(false);
       return;
     }
 
     try {
+      const nombresTecnologias = formData.tecnologias.map(id => {
+        return tecnologias.find(t => t.id === id)?.nombre;
+      }).filter(Boolean);
+
       const ofertaData = {
-        titulo: formData.titulo,
-        descripcion: formData.descripcion,
+        ...formData,
         salario_min: formData.salario_min ? parseInt(formData.salario_min) : null,
         salario_max: formData.salario_max ? parseInt(formData.salario_max) : null,
-        tipo_contrato: formData.tipo_contrato,
-        ubicacion: formData.ubicacion,
-        tecnologias: formData.tecnologias
+        vacantes: parseInt(formData.vacantes),
+        tecnologias: nombresTecnologias
       };
 
       const response = await fetch('http://localhost:8000/api/ofertas', {
@@ -100,200 +115,223 @@ export default function CrearOferta() {
         body: JSON.stringify(ofertaData)
       });
 
-      if (response.ok) {
-        router.push('/dashboard');
-      } else {
-        const errorData = await response.json();
-        alert('Error al crear la oferta: ' + (errorData.message || 'Error desconocido'));
-      }
+      if (response.ok) router.push('/dashboard');
+      else alert('Error al crear la oferta');
     } catch (error) {
-      console.error('Error creating oferta:', error);
-      alert('Error al crear la oferta. Inténtalo de nuevo.');
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  if (!user || userType !== 'empresa') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  const inputStyles = "w-full px-6 py-4 bg-white border-2 border-blue-100 rounded-2xl focus:border-blue-600 focus:bg-white outline-none transition-all text-gray-800 font-medium placeholder:text-gray-300 shadow-sm shadow-blue-50/50";
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
-      <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="min-h-screen bg-[#F0F7FF] pt-24 pb-12 font-sans">
+      <div className="max-w-5xl mx-auto px-6">
+
         {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Volver al Dashboard
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Crear Nueva Oferta de Empleo</h1>
-          <p className="text-gray-600">Publica una nueva oportunidad laboral para tu empresa</p>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Título */}
-            <div className="md:col-span-2">
-              <label htmlFor="titulo" className="block text-sm font-medium text-gray-700 mb-2">
-                Título de la Oferta *
-              </label>
-              <input
-                type="text"
-                id="titulo"
-                name="titulo"
-                required
-                value={formData.titulo}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ej: Desarrollador Full Stack Senior"
-              />
-            </div>
-
-            {/* Descripción */}
-            <div className="md:col-span-2">
-              <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-2">
-                Descripción *
-              </label>
-              <textarea
-                id="descripcion"
-                name="descripcion"
-                required
-                rows={6}
-                value={formData.descripcion}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Describe las responsabilidades, requisitos y beneficios de la posición..."
-              />
-            </div>
-
-            {/* Salario Mínimo */}
-            <div>
-              <label htmlFor="salario_min" className="block text-sm font-medium text-gray-700 mb-2">
-                Salario Mínimo (€)
-              </label>
-              <input
-                type="number"
-                id="salario_min"
-                name="salario_min"
-                value={formData.salario_min}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="25000"
-                min="0"
-              />
-            </div>
-
-            {/* Salario Máximo */}
-            <div>
-              <label htmlFor="salario_max" className="block text-sm font-medium text-gray-700 mb-2">
-                Salario Máximo (€)
-              </label>
-              <input
-                type="number"
-                id="salario_max"
-                name="salario_max"
-                value={formData.salario_max}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="35000"
-                min="0"
-              />
-            </div>
-
-            {/* Tipo de Contrato */}
-            <div>
-              <label htmlFor="tipo_contrato" className="block text-sm font-medium text-gray-700 mb-2">
-                Tipo de Contrato *
-              </label>
-              <select
-                id="tipo_contrato"
-                name="tipo_contrato"
-                required
-                value={formData.tipo_contrato}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="Tiempo completo">Tiempo completo</option>
-                <option value="Tiempo parcial">Tiempo parcial</option>
-                <option value="Contrato temporal">Contrato temporal</option>
-                <option value="Freelance">Freelance</option>
-                <option value="Prácticas">Prácticas</option>
-              </select>
-            </div>
-
-            {/* Ubicación */}
-            <div>
-              <label htmlFor="ubicacion" className="block text-sm font-medium text-gray-700 mb-2">
-                Ubicación
-              </label>
-              <input
-                type="text"
-                id="ubicacion"
-                name="ubicacion"
-                value={formData.ubicacion}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ej: Madrid, España"
-              />
-            </div>
-          </div>
-
-          {/* Tecnologías */}
-          <div className="mt-8">
-            <label className="block text-sm font-medium text-gray-700 mb-4">
-              Tecnologías Requeridas *
-            </label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {tecnologias.map((tecnologia) => (
-                <label key={tecnologia.id} className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.tecnologias.includes(tecnologia.id)}
-                    onChange={() => handleTecnologiaToggle(tecnologia.id)}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">{tecnologia.nombre}</span>
-                </label>
-              ))}
-            </div>
-            {tecnologias.length === 0 && (
-              <p className="text-sm text-gray-500 mt-2">Cargando tecnologías...</p>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="mt-8 flex justify-end space-x-4">
-            <Link
-              href="/dashboard"
-              className="px-6 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition"
-            >
-              Cancelar
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6"
+        >
+          <div>
+            <Link href="/dashboard" className="inline-flex items-center text-sm font-bold text-blue-600 hover:text-blue-800 mb-4 group uppercase tracking-tight">
+              <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
+              Volver al panel
             </Link>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight">Creador de Ofertas</h1>
+          </div>
+          <div className="hidden md:block">
+            <div className="bg-blue-600 p-4 rounded-2xl flex items-center gap-3 shadow-lg shadow-blue-200">
+              <AlertCircle className="text-white" />
+              <p className="text-xs text-white font-bold leading-tight">
+                Publicación <br /> inmediata.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+          {/* Columna Principal */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white rounded-[2.5rem] shadow-xl shadow-blue-900/5 border border-blue-50 p-8 md:p-10">
+              <div className="space-y-8">
+
+                {/* Título y Vacantes */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="md:col-span-3">
+                    <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 mb-4">
+                      <Briefcase size={14} className="text-blue-600" /> Título de la posición
+                    </label>
+                    <input
+                      type="text"
+                      name="titulo"
+                      required
+                      value={formData.titulo}
+                      onChange={handleInputChange}
+                      placeholder="Ej: Desarrollador React Senior"
+                      className={inputStyles + " font-bold"}
+                    />
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 mb-4">
+                      <Users size={14} className="text-blue-600" /> Vacantes
+                    </label>
+                    <input
+                      type="number"
+                      name="vacantes"
+                      min="1"
+                      required
+                      value={formData.vacantes}
+                      onChange={handleInputChange}
+                      className={inputStyles + " font-bold text-center"}
+                    />
+                  </div>
+                </div>
+
+                {/* Descripción */}
+                <div>
+                  <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 mb-4">
+                    <FileText size={14} className="text-blue-600" /> Descripción detallada
+                  </label>
+                  <textarea
+                    name="descripcion"
+                    required
+                    rows={10}
+                    value={formData.descripcion}
+                    onChange={handleInputChange}
+                    placeholder="Escribe aquí los detalles del puesto..."
+                    className={inputStyles + " resize-none"}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Selector de Tecnologías */}
+            <div className="bg-white rounded-[2.5rem] shadow-xl shadow-blue-900/5 border border-blue-50 p-8 md:p-10">
+              <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 mb-6">
+                <Tag size={14} className="text-blue-600" /> Tecnologías Requeridas
+              </label>
+              <div className="flex flex-wrap gap-3">
+                {tecnologias.map((tech) => (
+                  <button
+                    key={tech.id}
+                    type="button"
+                    onClick={() => handleTecnologiaToggle(tech.id)}
+                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all border-2 ${formData.tecnologias.includes(tech.id)
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200'
+                      : 'bg-white border-blue-100 text-slate-400 hover:border-blue-300'
+                      }`}
+                  >
+                    {tech.nombre}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Columna Lateral */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-[2.5rem] shadow-xl shadow-blue-900/5 border border-blue-50 p-8">
+              <h3 className="text-lg font-black text-slate-900 mb-6">Condiciones</h3>
+
+              <div className="space-y-6">
+                {/* Estado de la Oferta */}
+                <div>
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                    <Activity size={12} className="text-blue-600" /> Estado Inicial
+                  </label>
+                  <select
+                    name="estado"
+                    value={formData.estado}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 border-2 rounded-xl outline-none transition-all text-sm font-bold appearance-none cursor-pointer ${formData.estado === 'activa' ? 'border-green-100 bg-green-50 text-green-700 focus:border-green-500' :
+                        formData.estado === 'pausada' ? 'border-amber-100 bg-amber-50 text-amber-700 focus:border-amber-500' :
+                          'border-red-100 bg-red-50 text-red-700 focus:border-red-500'
+                      }`}
+                  >
+                    <option value="activa">Activa</option>
+                    <option value="pausada">Pausada</option>
+                    <option value="finalizada">Finalizada</option>
+                  </select>
+                </div>
+
+                {/* Ubicación */}
+                <div>
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                    <MapPin size={12} className="text-blue-600" /> Ubicación
+                  </label>
+                  <select
+                    name="ubicacion"
+                    value={formData.ubicacion}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 bg-white border-2 border-blue-100 rounded-xl focus:border-blue-600 outline-none transition-all text-sm font-bold appearance-none cursor-pointer"
+                  >
+                    {COMUNIDADES.map(com => (
+                      <option key={com} value={com}>{com}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Contrato */}
+                <div>
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                    <FileText size={12} className="text-blue-600" /> Contrato
+                  </label>
+                  <select
+                    name="tipo_contrato"
+                    value={formData.tipo_contrato}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 bg-white border-2 border-blue-100 rounded-xl focus:border-blue-600 outline-none transition-all text-sm font-bold appearance-none cursor-pointer"
+                  >
+                    <option value="Tiempo completo">Tiempo completo</option>
+                    <option value="Tiempo parcial">Tiempo parcial</option>
+                    <option value="Freelance">Freelance</option>
+                    <option value="Prácticas">Prácticas</option>
+                  </select>
+                </div>
+
+                {/* Salarios */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                      <DollarSign size={12} className="text-blue-600" /> Mín (€)
+                    </label>
+                    <input
+                      type="text"
+                      name="salario_min"
+                      value={formatCurrencyInput(formData.salario_min)}
+                      onChange={handleSalarioChange}
+                      placeholder="20.000"
+                      className="w-full px-4 py-3 bg-white border-2 border-blue-100 rounded-xl focus:border-blue-600 outline-none transition-all text-sm font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                      Máx (€)
+                    </label>
+                    <input
+                      type="text"
+                      name="salario_max"
+                      value={formatCurrencyInput(formData.salario_max)}
+                      onChange={handleSalarioChange}
+                      placeholder="45.000"
+                      className="w-full px-4 py-3 bg-white border-2 border-blue-100 rounded-xl focus:border-blue-600 outline-none transition-all text-sm font-bold"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="w-full py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all disabled:opacity-50 disabled:translate-y-0 flex items-center justify-center gap-3"
             >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creando...
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5 mr-2" />
-                  Crear Oferta
-                </>
-              )}
+              {loading ? 'Publicando...' : <><Save size={18} /> Publicar ahora</>}
             </button>
           </div>
         </form>
