@@ -3,24 +3,23 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function EditarOferta() {
     const { user, userType, token } = useAuth();
     const router = useRouter();
     const params = useParams();
+    const id = params?.id;
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    // Estado del formulario
     const [formData, setFormData] = useState({
         titulo: '',
         descripcion: '',
-        requisitos: '',
         ubicacion: '',
         tipo_contrato: 'Tiempo Completo',
-        jornada: 'Completa',
         salario_min: '',
         salario_max: '',
         estado: 'activa'
@@ -31,27 +30,28 @@ export default function EditarOferta() {
             router.push('/auth');
             return;
         }
-        fetchOferta();
-    }, [params.id]);
+        if (id) fetchOferta();
+    }, [id, user, userType]);
 
     const fetchOferta = async () => {
         try {
-            const response = await fetch(`http://localhost:8000/api/ofertas/${params.id}`, {
-                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+            const response = await fetch(`http://localhost:8000/api/ofertas/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
             });
             if (response.ok) {
-                const data = await response.json();
-                const o = data.data;
+                const json = await response.json();
+                const o = json.data || json;
                 setFormData({
-                    titulo: o.titulo,
-                    descripcion: o.descripcion,
-                    requisitos: o.requisitos || '',
-                    ubicacion: o.ubicacion,
-                    tipo_contrato: o.tipo_contrato,
-                    jornada: o.jornada || 'Completa',
+                    titulo: o.titulo || '',
+                    descripcion: o.descripcion || '',
+                    ubicacion: o.ubicacion || '',
+                    tipo_contrato: o.tipo_contrato || 'Tiempo Completo',
                     salario_min: o.salario_min || '',
                     salario_max: o.salario_max || '',
-                    estado: o.estado
+                    estado: o.estado || 'activa'
                 });
             }
         } catch (error) {
@@ -65,7 +65,7 @@ export default function EditarOferta() {
         e.preventDefault();
         setSaving(true);
         try {
-            const response = await fetch(`http://localhost:8000/api/ofertas/${params.id}`, {
+            const response = await fetch(`http://localhost:8000/api/ofertas/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -76,7 +76,8 @@ export default function EditarOferta() {
             });
 
             if (response.ok) {
-                router.push(`/dashboard/ofertas/${params.id}`);
+                router.push(`/dashboard/ofertas/${id}`);
+                router.refresh(); // Forzar actualización de datos
             } else {
                 alert('Error al actualizar la oferta');
             }
@@ -87,58 +88,83 @@ export default function EditarOferta() {
         }
     };
 
-    if (loading) return <div className="pt-24 text-center">Cargando datos...</div>;
+    if (loading) return (
+        <div className="min-h-screen bg-[#F8FAFC] pt-24 flex items-center justify-center">
+            <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    );
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pt-24 pb-12">
-            <div className="max-w-4xl mx-auto px-4">
-                <Link href={`/dashboard/ofertas/${params.id}`} className="inline-flex items-center text-indigo-600 mb-6">
-                    <ArrowLeft className="w-4 h-4 mr-2" /> Volver al detalle
+        <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-12">
+            <div className="max-w-4xl mx-auto px-6">
+                <Link href={`/dashboard/ofertas/${id}`} className="inline-flex items-center text-indigo-600 font-bold mb-8 group">
+                    <ArrowLeft className="w-5 h-5 mr-2 group-hover:translate-x-[-4px] transition-transform" />
+                    Cancelar y volver
                 </Link>
 
-                <div className="bg-white rounded-xl shadow-lg p-8">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-6">Editar Oferta de Empleo</h1>
+                <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-10">
+                    <h1 className="text-3xl font-black text-gray-900 mb-8">Editar Oferta</h1>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700">Título de la vacante</label>
+                                <label className="block text-sm font-black text-gray-400 uppercase tracking-widest mb-2">Título de la vacante</label>
                                 <input
                                     type="text" required
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
+                                    className="w-full bg-gray-50 border-2 border-gray-50 rounded-2xl p-4 focus:bg-white focus:border-indigo-500 outline-none transition-all font-medium"
                                     value={formData.titulo}
                                     onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Ubicación</label>
+                                <label className="block text-sm font-black text-gray-400 uppercase tracking-widest mb-2">Ubicación</label>
                                 <input
                                     type="text" required
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
+                                    className="w-full bg-gray-50 border-2 border-gray-50 rounded-2xl p-4 focus:bg-white focus:border-indigo-500 outline-none transition-all font-medium"
                                     value={formData.ubicacion}
                                     onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Estado</label>
+                                <label className="block text-sm font-black text-gray-400 uppercase tracking-widest mb-2">Estado de la oferta</label>
                                 <select
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
+                                    className="w-full bg-gray-50 border-2 border-gray-50 rounded-2xl p-4 focus:bg-white focus:border-indigo-500 outline-none transition-all font-bold text-gray-700"
                                     value={formData.estado}
                                     onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
                                 >
-                                    <option value="activa">Activa</option>
-                                    <option value="pausada">Pausada</option>
-                                    <option value="finalizada">Finalizada</option>
+                                    <option value="activa">🟢 Activa</option>
+                                    <option value="pausada">🟡 Pausada</option>
+                                    <option value="finalizada">🔴 Finalizada</option>
                                 </select>
                             </div>
 
+                            <div>
+                                <label className="block text-sm font-black text-gray-400 uppercase tracking-widest mb-2">Salario Mínimo (€)</label>
+                                <input
+                                    type="number"
+                                    className="w-full bg-gray-50 border-2 border-gray-50 rounded-2xl p-4 focus:bg-white focus:border-indigo-500 outline-none transition-all font-medium"
+                                    value={formData.salario_min}
+                                    onChange={(e) => setFormData({ ...formData, salario_min: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-black text-gray-400 uppercase tracking-widest mb-2">Salario Máximo (€)</label>
+                                <input
+                                    type="number"
+                                    className="w-full bg-gray-50 border-2 border-gray-50 rounded-2xl p-4 focus:bg-white focus:border-indigo-500 outline-none transition-all font-medium"
+                                    value={formData.salario_max}
+                                    onChange={(e) => setFormData({ ...formData, salario_max: e.target.value })}
+                                />
+                            </div>
+
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700">Descripción</label>
+                                <label className="block text-sm font-black text-gray-400 uppercase tracking-widest mb-2">Descripción del puesto</label>
                                 <textarea
-                                    rows={4} required
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
+                                    rows={6} required
+                                    className="w-full bg-gray-50 border-2 border-gray-50 rounded-2xl p-4 focus:bg-white focus:border-indigo-500 outline-none transition-all font-medium resize-none"
                                     value={formData.descripcion}
                                     onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                                 />
@@ -149,10 +175,10 @@ export default function EditarOferta() {
                             <button
                                 type="submit"
                                 disabled={saving}
-                                className="inline-flex items-center bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+                                className="inline-flex items-center bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 disabled:opacity-50"
                             >
-                                <Save className="w-4 h-4 mr-2" />
-                                {saving ? 'Guardando...' : 'Guardar Cambios'}
+                                <Save className="w-5 h-5 mr-2" />
+                                {saving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
                             </button>
                         </div>
                     </form>
