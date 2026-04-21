@@ -2,67 +2,60 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\AlumnoController;
-use App\Http\Controllers\EmpresaController;
-use App\Http\Controllers\OfertaController;
-use App\Http\Controllers\PostulacionController;
-use App\Http\Controllers\TecnologiaController;
-use App\Http\Controllers\TendenciaMercadoController;
+use App\Http\Controllers\{
+    AuthController,
+    AlumnoController,
+    EmpresaController,
+    OfertaController,
+    PostulacionController,
+    TecnologiaController,
+    TendenciaMercadoController
+};
 
-// Health check endpoint
-Route::get('/health', function () {
-    return response()->json(['status' => 'ok', 'message' => 'Backend is running']);
-});
+// --- RUTAS PÚBLICAS ---
+Route::get('/health', fn() => response()->json(['status' => 'ok']));
 
-// Public auth routes
+// Auth
 Route::post('/register-alumno', [AuthController::class, 'registerAlumno']);
 Route::post('/login-alumno', [AuthController::class, 'loginAlumno']);
 Route::post('/register-empresa', [AuthController::class, 'registerEmpresa']);
 Route::post('/login-empresa', [AuthController::class, 'loginEmpresa']);
 
-// Protected auth routes
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', [AuthController::class, 'user']);
-});
-
-// Rutas de Alumnos
-Route::apiResource('alumnos', AlumnoController::class);
-
-// Rutas de Empresas
-Route::apiResource('empresas', EmpresaController::class);
-
-// 1. Primero las rutas específicas/estáticas
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/mis-ofertas', [OfertaController::class, 'misOfertas']);
-    Route::post('/ofertas', [OfertaController::class, 'store']);
-    Route::put('/ofertas/{id}', [OfertaController::class, 'update']);
-    Route::delete('/ofertas/{id}', [OfertaController::class, 'destroy']);
-});
-
-// 2. Después las rutas con parámetros variables
+// Visualización de Ofertas (Público para que los alumnos vean qué hay)
 Route::get('/ofertas', [OfertaController::class, 'index']);
 Route::get('/ofertas/{id}', [OfertaController::class, 'show']);
 
-// Rutas protegidas de Postulaciones
+// Tecnologías y Tendencias (Lectura pública)
+Route::get('/tecnologias', [TecnologiaController::class, 'index']);
+Route::get('/tendencias', [TendenciaMercadoController::class, 'index']);
+Route::get('/tendencias/tecnologia/{tecnologiaId}', [TendenciaMercadoController::class, 'byTecnologia']);
+
+
+// --- RUTAS PROTEGIDAS (Requieren Token) ---
 Route::middleware('auth:sanctum')->group(function () {
-    // Alumno postulándose
+
+    // Usuario actual y Logout
+    Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+    // OFERTAS (Gestión de empresa)
+    Route::get('/mis-ofertas', [OfertaController::class, 'misOfertas']); // <--- Importante que esté arriba
+    Route::post('/ofertas', [OfertaController::class, 'store']);
+    Route::put('/ofertas/{id}', [OfertaController::class, 'update']);
+    Route::delete('/ofertas/{id}', [OfertaController::class, 'destroy']);
+
+    // POSTULACIONES
+    // Para Alumnos
     Route::post('/postulaciones', [PostulacionController::class, 'store']);
     Route::get('/mis-postulaciones', [PostulacionController::class, 'misPostulaciones']);
     Route::delete('/postulaciones/{id}/retirar', [PostulacionController::class, 'retirar']);
 
-    // Empresa viendo postulaciones
+    // Para Empresas
     Route::get('/postulaciones-mis-ofertas', [PostulacionController::class, 'postulacionesAMisOfertas']);
     Route::get('/ofertas/{oferta_id}/postulaciones', [PostulacionController::class, 'porOferta']);
     Route::put('/postulaciones/{id}/estado', [PostulacionController::class, 'updateEstado']);
+
+    // Recursos de perfil
+    Route::apiResource('alumnos', AlumnoController::class)->only(['show', 'update']);
+    Route::apiResource('empresas', EmpresaController::class)->only(['show', 'update']);
 });
-
-// Rutas de Tendencias de Mercado
-Route::get('tendencias', [TendenciaMercadoController::class, 'index']);
-Route::get('tendencias/{id}', [TendenciaMercadoController::class, 'show']);
-Route::get('tendencias/tecnologia/{tecnologiaId}', [TendenciaMercadoController::class, 'byTecnologia']);
-
-// Rutas de Tecnologías
-Route::get('/tecnologias', [TecnologiaController::class, 'index']);
-Route::get('/tecnologias/{id}', [TecnologiaController::class, 'show']);
