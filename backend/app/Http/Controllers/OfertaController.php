@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\OfertaEmpleo;
-use App\Models\Postulacion;
-use App\Models\Empresa;
+use App\Models\Oferta;
+use App\Models\Tecnologia;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -12,14 +11,12 @@ class OfertaController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = OfertaEmpleo::where('estado', 'activa')->with(['empresa', 'tecnologias']);
+        $query = Oferta::with(['empresa', 'tecnologias']);
 
-        // Filtrar por tipo de contrato
-        if ($request->has('tipo_contrato')) {
-            $query->where('tipo_contrato', $request->tipo_contrato);
+        if ($request->has('estado')) {
+            $query->where('estado', $request->estado);
         }
 
-        // Búsqueda por título o descripción
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -28,55 +25,49 @@ class OfertaController extends Controller
             });
         }
 
-        $ofertas = $query->orderBy('created_at', 'desc')->paginate(10);
-
-        return response()->json($ofertas);
+        return response()->json($query->orderBy('created_at', 'desc')->get());
     }
 
     public function show($id): JsonResponse
     {
-        $oferta = OfertaEmpleo::with(['empresa', 'postulaciones.alumno', 'tecnologias'])->find($id);
-
-        if (!$oferta) {
-            return response()->json(['error' => 'Oferta no encontrada'], 404);
-        }
-
+        $oferta = Oferta::with(['empresa', 'tecnologias', 'postulaciones.alumno'])->find($id);
+        if (!$oferta)
+            return response()->json(['error' => 'No encontrada'], 404);
         return response()->json($oferta);
     }
 
     public function store(Request $request): JsonResponse
     {
-        $empresa = auth()->user();
-        if (!$empresa || !isset($empresa->nombre_comercial)) {
-            return response()->json(['error' => 'Solo las empresas pueden crear ofertas'], 403);
-        }
-
         $validated = $request->validate([
             'titulo' => 'required|string|max:255',
             'descripcion' => 'required|string',
-            'tipo_contrato' => 'required|string|in:Tiempo completo,Tiempo parcial,Contrato temporal,Freelance,Prácticas',
-            'ubicacion' => 'nullable|string',
-            'salario_min' => 'nullable|numeric|min:0',
-            'salario_max' => 'nullable|numeric|min:0',
-            'vacantes' => 'nullable|integer|min:1',
-            'tecnologias' => 'nullable|array',
-            'tecnologias.*' => 'integer|exists:TECNOLOGIA,id',
+            'ubicacion' => 'required|string',
+            'tipo_contrato' => 'required|string',
+            'salario_min' => 'nullable', // Lo limpiamos luego
+            'salario_max' => 'nullable',
+            'vacantes' => 'integer|min:1',
+            'tecnologias' => 'nullable|array'
         ]);
 
-        $oferta = OfertaEmpleo::create([
-            'empresa_id' => $empresa->id,
+        // Limpieza de dinero: quitamos puntos de miles y decimales
+        $s_min = isset($validated['salario_min']) ? preg_replace('/\D/', '', explode('.', $validated['salario_min'])[0]) : null;
+        $s_max = isset($validated['salario_max']) ? preg_replace('/\D/', '', explode('.', $validated['salario_max'])[0]) : null;
+
+        $oferta = Oferta::create([
+            'empresa_id' => auth()->id(),
             'titulo' => $validated['titulo'],
             'descripcion' => $validated['descripcion'],
+            'ubicacion' => $validated['ubicacion'],
             'tipo_contrato' => $validated['tipo_contrato'],
-            'ubicacion' => $validated['ubicacion'] ?? null,
-            'salario_min' => $validated['salario_min'] ?? null,
-            'salario_max' => $validated['salario_max'] ?? null,
+            'salario_min' => $s_min,
+            'salario_max' => $s_max,
             'vacantes' => $validated['vacantes'] ?? 1,
-            'estado' => 'activa',
+            'estado' => 'activa'
         ]);
 
-        if (!empty($validated['tecnologias'])) {
-            $oferta->tecnologias()->sync($validated['tecnologias']);
+        if ($request->has('tecnologias')) {
+            $ids = Tecnologia::whereIn('nombre', $request->tecnologias)->pluck('id');
+            $oferta->tecnologias()->sync($ids);
         }
 
         return response()->json($oferta->load('tecnologias'), 201);
@@ -84,64 +75,45 @@ class OfertaController extends Controller
 
     public function update(Request $request, $id): JsonResponse
     {
-        $oferta = OfertaEmpleo::find($id);
-
-        if (!$oferta) {
-            return response()->json(['error' => 'Oferta no encontrada'], 404);
-        }
-
-        if ($oferta->empresa_id !== auth()->id()) {
-            return response()->json(['error' => 'No autorizado'], 403);
-        }
+        $oferta = Oferta::find($id);
+        if (!$oferta)
+            return response()->json(['error' => 'No encontrada'], 404);
 
         $validated = $request->validate([
-            'titulo' => 'string|max:255',
-            'descripcion' => 'string',
-            'tipo_contrato' => 'string|in:Tiempo completo,Tiempo parcial,Contrato temporal,Freelance,Prácticas',
-            'estado' => 'string|in:activa,cerrada,pausada',
-            'ubicacion' => 'nullable|string|max:255',
-            'salario_min' => 'nullable|numeric|min:0',
-            'salario_max' => 'nullable|numeric|min:0',
-            'vacantes' => 'nullable|integer|min:1',
-            'fecha_cierre' => 'nullable|date_format:Y-m-d',
-            'requisitos' => 'nullable|string',
-            'beneficios' => 'nullable|string',
+            'titulo' => 'sometimes|string',
+            'descripcion' => 'sometimes|string',
+            'ubicacion' => 'sometimes|string',
+            'salario_min' => 'nullable',
+            'salario_max' => 'nullable',
+            'estado' => 'sometimes|string',
+            'vacantes' => 'sometimes|integer',
+            'tecnologias' => 'sometimes|array'
         ]);
+
+        // Arreglo del dinero: Si viene con puntos (20.000), los quitamos antes de guardar
+        if (isset($validated['salario_min'])) {
+            $validated['salario_min'] = preg_replace('/\D/', '', explode('.', (string) $validated['salario_min'])[0]);
+        }
+        if (isset($validated['salario_max'])) {
+            $validated['salario_max'] = preg_replace('/\D/', '', explode('.', (string) $validated['salario_max'])[0]);
+        }
 
         $oferta->update($validated);
 
-        return response()->json($oferta);
+        // Sincronizar tecnologías por NOMBRE
+        if ($request->has('tecnologias')) {
+            $ids = Tecnologia::whereIn('nombre', $request->tecnologias)->pluck('id');
+            $oferta->tecnologias()->sync($ids);
+        }
+
+        return response()->json($oferta->load('tecnologias'));
     }
 
     public function destroy($id): JsonResponse
     {
-        $oferta = OfertaEmpleo::find($id);
-
-        if (!$oferta) {
-            return response()->json(['error' => 'Oferta no encontrada'], 404);
-        }
-
-        if ($oferta->empresa_id !== auth()->id()) {
-            return response()->json(['error' => 'No autorizado'], 403);
-        }
-
-        $oferta->delete();
-
-        return response()->json(['message' => 'Oferta eliminada']);
-    }
-
-    public function misOfertas(): JsonResponse
-    {
-        $empresa = auth()->user();
-        if (!$empresa) {
-            return response()->json(['error' => 'No autorizado'], 401);
-        }
-
-        $ofertas = OfertaEmpleo::where('empresa_id', $empresa->id)
-            ->with(['empresa', 'tecnologias'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json($ofertas);
+        $oferta = Oferta::find($id);
+        if ($oferta)
+            $oferta->delete();
+        return response()->json(['message' => 'Eliminada']);
     }
 }
