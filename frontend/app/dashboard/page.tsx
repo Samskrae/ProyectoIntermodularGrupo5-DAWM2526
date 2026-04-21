@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Users, Eye, Edit, Trash2, Plus, BarChart3, TrendingUp } from 'lucide-react';
+import { Users, Eye, Edit, Trash2, Plus, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
@@ -37,7 +37,6 @@ export default function Dashboard() {
       const oJson = await ofertasRes.json();
       const pJson = await postulacionesRes.json();
 
-      // Extracción segura de arrays según la estructura de Laravel
       const listaOfertas = Array.isArray(oJson) ? oJson : (oJson.data || oJson.ofertas || []);
       const listaPostulaciones = Array.isArray(pJson) ? pJson : (pJson.data || pJson.postulaciones || []);
 
@@ -71,13 +70,13 @@ export default function Dashboard() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-[#F0F7FF] flex items-center justify-center">
+    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
       <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#F0F7FF] pt-24 pb-12">
+    <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-12">
       <div className="max-w-7xl mx-auto px-6">
 
         {/* Header Principal */}
@@ -86,10 +85,10 @@ export default function Dashboard() {
             <h1 className="text-4xl font-black text-slate-900 tracking-tight">
               Panel de {user?.nombre_comercial || 'Empresa'}
             </h1>
-            <p className="text-slate-500 font-medium mt-1 text-lg">Gestiona tus vacantes y revisa candidatos.</p>
+            <p className="text-slate-500 font-bold mt-1 text-lg">Gestiona tus vacantes y revisa candidatos.</p>
           </div>
           <Link href="/crear-oferta">
-            <button className="flex items-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all uppercase text-sm tracking-widest">
+            <button className="flex items-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all uppercase text-sm tracking-widest border-2 border-blue-700">
               <Plus size={20} strokeWidth={3} />
               Nueva Oferta
             </button>
@@ -99,43 +98,42 @@ export default function Dashboard() {
         {/* Tarjetas de Estadísticas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           {[
-            { label: 'Ofertas Totales', val: stats.total, icon: BarChart3, color: 'text-blue-600' },
-            { label: 'Vacantes Activas', val: stats.activas, icon: Eye, color: 'text-emerald-600' },
-            { label: 'Candidatos Totales', val: stats.candidatos, icon: Users, color: 'text-blue-600' }
+            { label: 'Ofertas Totales', val: stats.total, icon: BarChart3, color: 'text-blue-600', bColor: 'border-blue-200' },
+            { label: 'Vacantes Activas', val: stats.activas, icon: Eye, color: 'text-emerald-600', bColor: 'border-emerald-200' },
+            { label: 'Candidatos Totales', val: stats.candidatos, icon: Users, color: 'text-indigo-600', bColor: 'border-indigo-200' }
           ].map((item, i) => (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+            <div
               key={i}
-              className="bg-white rounded-[2rem] shadow-xl shadow-blue-900/5 border border-blue-50 p-7 flex items-center justify-between"
+              className={`bg-white rounded-[2rem] shadow-sm border-2 ${item.bColor} p-7 flex items-center justify-between`}
             >
               <div>
                 <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">{item.label}</p>
                 <p className={`text-4xl font-black ${item.color}`}>{item.val}</p>
               </div>
               <item.icon className={`${item.color} opacity-20`} size={48} />
-            </motion.div>
+            </div>
           ))}
         </div>
 
         {/* Tabla de Vacantes */}
-        <div className="bg-white rounded-[2.5rem] shadow-xl shadow-blue-900/5 border border-blue-50 overflow-hidden">
-          <div className="px-8 py-6 border-b border-blue-50 bg-white flex justify-between items-center">
-            <h2 className="text-xl font-black text-slate-900">Mis Vacantes Publicadas</h2>
+        <div className="bg-white rounded-[2.5rem] shadow-sm border-2 border-blue-200 overflow-hidden">
+          <div className="px-8 py-6 border-b-2 border-slate-50 bg-white flex justify-between items-center">
+            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Mis Vacantes Publicadas</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="text-slate-400 uppercase text-[10px] font-black tracking-widest border-b border-blue-50">
+                <tr className="text-slate-400 uppercase text-[10px] font-black tracking-widest border-b-2 border-slate-50">
                   <th className="px-8 py-5">Posición y Contrato</th>
                   <th className="px-8 py-5 text-center">Estado</th>
                   <th className="px-8 py-5 text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-blue-50">
+              <tbody className="divide-y-2 divide-slate-50">
                 {ofertas.length > 0 ? ofertas.map((o) => (
-                  <tr key={o.id} className="hover:bg-blue-50/40 transition-colors group">
+                  <tr key={o.id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="px-8 py-5">
-                      <p className="font-bold text-slate-800 text-lg leading-tight group-hover:text-blue-600 transition-colors">
+                      <p className="font-black text-slate-800 text-lg leading-tight group-hover:text-blue-600 transition-colors">
                         {o.titulo}
                       </p>
                       <p className="text-[10px] text-slate-400 font-black uppercase mt-1">
@@ -143,41 +141,43 @@ export default function Dashboard() {
                       </p>
                     </td>
                     <td className="px-8 py-5 text-center">
-                      <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${o.estado === 'activa' || !o.estado ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                      <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border-2 ${o.estado === 'activa' || !o.estado
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
                         }`}>
                         {o.estado || 'activa'}
                       </span>
                     </td>
                     <td className="px-8 py-5">
-                      <div className="flex justify-end gap-2">
-                        {/* BOTÓN VER (EL OJO) */}
+                      <div className="flex justify-end gap-3">
+                        {/* BOTÓN VER (Índigo/Violeta) */}
                         <Link href={`/dashboard/ofertas/${o.id}`} title="Ver detalles">
-                          <button className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                            <Eye size={18} />
+                          <button className="p-3 bg-indigo-50 text-indigo-600 rounded-xl border-2 border-indigo-100 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-sm">
+                            <Eye size={18} strokeWidth={2.5} />
                           </button>
                         </Link>
 
-                        {/* BOTÓN EDITAR */}
+                        {/* BOTÓN EDITAR (Azul) */}
                         <Link href={`/dashboard/ofertas/${o.id}/editar`} title="Editar vacante">
-                          <button className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                            <Edit size={18} />
+                          <button className="p-3 bg-blue-50 text-blue-600 rounded-xl border-2 border-blue-100 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm">
+                            <Edit size={18} strokeWidth={2.5} />
                           </button>
                         </Link>
 
-                        {/* BOTÓN ELIMINAR */}
+                        {/* BOTÓN ELIMINAR (Rojo) */}
                         <button
                           onClick={() => deleteOferta(o.id)}
                           title="Eliminar vacante"
-                          className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                          className="p-3 bg-red-50 text-red-600 rounded-xl border-2 border-red-100 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all shadow-sm"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={18} strokeWidth={2.5} />
                         </button>
                       </div>
                     </td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={3} className="px-8 py-20 text-center text-slate-400 font-medium italic">
+                    <td colSpan={3} className="px-8 py-20 text-center text-slate-400 font-bold italic">
                       Aún no has publicado ninguna oferta de empleo.
                     </td>
                   </tr>

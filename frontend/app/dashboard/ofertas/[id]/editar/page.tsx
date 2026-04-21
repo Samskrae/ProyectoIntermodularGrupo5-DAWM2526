@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, Check } from 'lucide-react';
+import { ArrowLeft, Save, Check, Layout, PenTool } from 'lucide-react';
 import Link from 'next/link';
 
 const COMUNIDADES = [
@@ -37,10 +37,8 @@ export default function EditarOferta() {
     });
     const [tecnologias, setTecnologias] = useState<string[]>([]);
 
-    // Función de formateo limpia
     const formatVisualNumber = (val: string | number) => {
         if (val === null || val === undefined || val === '') return "";
-        // Convertimos a string y quitamos TODO lo que no sea número (incluyendo decimales .00)
         const cleanNumber = String(val).split('.')[0].replace(/\D/g, "");
         return new Intl.NumberFormat('de-DE').format(parseInt(cleanNumber));
     };
@@ -59,7 +57,6 @@ export default function EditarOferta() {
                     descripcion: o.descripcion || '',
                     ubicacion: o.ubicacion || '',
                     tipo_contrato: o.tipo_contrato || '',
-                    // AQUÍ ESTÁ EL ARREGLO: Limpiamos los decimales del backend antes de mostrar
                     salario_min: formatVisualNumber(o.salario_min),
                     salario_max: formatVisualNumber(o.salario_max),
                     estado: o.estado || 'activa',
@@ -78,7 +75,6 @@ export default function EditarOferta() {
 
         const body = {
             ...formData,
-            // Quitamos los puntos de miles para enviar número puro al back
             salario_min: formData.salario_min.replace(/\./g, ""),
             salario_max: formData.salario_max.replace(/\./g, ""),
             tecnologias: tecnologias
@@ -102,90 +98,140 @@ export default function EditarOferta() {
         finally { setSaving(false); }
     };
 
-    if (loading) return <div className="pt-24 text-center font-bold text-blue-700 uppercase">Cargando...</div>;
+    if (loading) return (
+        <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    );
 
     return (
-        <div className="min-h-screen bg-gray-100 pt-24 pb-12">
-            <div className="max-w-6xl mx-auto px-6">
-                <Link href={`/dashboard/ofertas/${id}`} className="inline-flex items-center text-blue-700 font-bold mb-6 hover:underline">
-                    <ArrowLeft className="w-4 h-4 mr-2" /> Volver
-                </Link>
+        <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-12 text-slate-900">
+            <div className="max-w-7xl mx-auto px-6">
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-white rounded-2xl border-2 border-gray-300 p-8 shadow-sm">
-                            <h1 className="text-2xl font-black mb-8 text-gray-800 border-b-2 border-gray-100 pb-4 uppercase">Editar Oferta</h1>
-                            <form id="edit-form" onSubmit={handleSubmit} className="space-y-6">
+                {/* Cabecera de Edición */}
+                <div className="mb-10">
+                    <Link href={`/dashboard/ofertas/${id}`} className="inline-flex items-center text-slate-500 font-black uppercase text-[10px] tracking-widest hover:text-blue-600 transition-all mb-6 group">
+                        <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                        Cancelar y Volver
+                    </Link>
+                    <h1 className="text-4xl font-black tracking-tighter">EDITAR VACANTE</h1>
+                    <p className="text-slate-500 font-bold mt-1 uppercase text-xs tracking-wider">ID de Oferta: #{id}</p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+
+                    {/* Bloque Principal Formulario */}
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="bg-white rounded-[2.5rem] border-2 border-blue-100 p-10 shadow-sm shadow-blue-900/5">
+                            <div className="flex items-center gap-3 mb-8 border-b-2 border-slate-50 pb-6">
+                                <Layout className="text-blue-600" size={24} />
+                                <h2 className="text-xl font-black uppercase tracking-tight">Información General</h2>
+                            </div>
+
+                            <form id="edit-form" onSubmit={handleSubmit} className="space-y-8">
                                 <div>
-                                    <label className="block text-[11px] font-black text-gray-500 uppercase mb-2">Título de la Vacante</label>
-                                    <input type="text" required className="w-full border-2 border-gray-300 rounded-xl p-3 font-bold text-gray-700 outline-none focus:border-blue-700"
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Título de la Posición</label>
+                                    <input type="text" required className="w-full border-2 border-slate-100 bg-slate-50/50 rounded-2xl p-4 font-black text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all"
                                         value={formData.titulo} onChange={e => setFormData({ ...formData, titulo: e.target.value })} />
                                 </div>
+
                                 <div>
-                                    <label className="block text-[11px] font-black text-gray-500 uppercase mb-2">Descripción</label>
-                                    <textarea rows={10} required className="w-full border-2 border-gray-300 rounded-xl p-4 font-medium text-gray-600 outline-none focus:border-blue-700"
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Descripción Detallada</label>
+                                    <textarea rows={12} required className="w-full border-2 border-slate-100 bg-slate-50/50 rounded-2xl p-5 font-medium text-slate-600 outline-none focus:border-blue-600 focus:bg-white transition-all leading-relaxed"
                                         value={formData.descripcion} onChange={e => setFormData({ ...formData, descripcion: e.target.value })} />
                                 </div>
-                                <div className="grid grid-cols-2 gap-6">
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
-                                        <label className="block text-[11px] font-black text-gray-500 uppercase mb-2">Ubicación</label>
-                                        <select className="w-full border-2 border-gray-300 rounded-xl p-3 font-bold text-gray-700 bg-white"
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Ubicación</label>
+                                        <select className="w-full border-2 border-slate-100 bg-slate-50/50 rounded-2xl p-4 font-black text-slate-700 outline-none focus:border-blue-600 transition-all appearance-none"
                                             value={formData.ubicacion} onChange={e => setFormData({ ...formData, ubicacion: e.target.value })}>
                                             {COMUNIDADES.map(c => <option key={c} value={c}>{c}</option>)}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-black text-gray-500 uppercase mb-2">Vacantes</label>
-                                        <input type="number" min="1" className="w-full border-2 border-gray-300 rounded-xl p-3 font-bold text-gray-700 outline-none"
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Número de Vacantes</label>
+                                        <input type="number" min="1" className="w-full border-2 border-slate-100 bg-slate-50/50 rounded-2xl p-4 font-black text-slate-700 outline-none focus:border-blue-600 transition-all"
                                             value={formData.vacantes} onChange={e => setFormData({ ...formData, vacantes: parseInt(e.target.value) || 1 })} />
                                     </div>
                                 </div>
                             </form>
                         </div>
 
-                        <div className="bg-white rounded-2xl border-2 border-gray-300 p-8 shadow-sm">
-                            <h2 className="text-lg font-black mb-6 text-gray-800 uppercase border-b-2 border-gray-100 pb-2">Tecnologías</h2>
+                        {/* Bloque Tecnologías */}
+                        <div className="bg-white rounded-[2.5rem] border-2 border-blue-100 p-10 shadow-sm">
+                            <div className="flex items-center gap-3 mb-8 border-b-2 border-slate-50 pb-6">
+                                <PenTool className="text-blue-600" size={24} />
+                                <h2 className="text-xl font-black uppercase tracking-tight">Stack Tecnológico Requerido</h2>
+                            </div>
                             <div className="flex flex-wrap gap-2">
                                 {TECNOLOGIAS_LISTA.map(t => (
                                     <button key={t} type="button"
                                         onClick={() => setTecnologias(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])}
-                                        className={`px-4 py-2 rounded-xl font-bold text-xs border-2 transition-all flex items-center gap-2 ${tecnologias.includes(t) ? 'border-blue-700 bg-blue-50 text-blue-800' : 'border-gray-200 bg-white text-gray-400'
+                                        className={`px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-tighter border-2 transition-all flex items-center gap-2 ${tecnologias.includes(t)
+                                            ? 'border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-100 scale-105'
+                                            : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200'
                                             }`}>
-                                        {t} {tecnologias.includes(t) && <Check className="w-3 h-3" />}
+                                        {t} {tecnologias.includes(t) && <Check size={12} strokeWidth={4} />}
                                     </button>
                                 ))}
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl border-2 border-gray-300 p-8 shadow-sm h-fit sticky top-24">
-                        <h2 className="text-lg font-black mb-6 text-gray-800 uppercase border-b-2 border-gray-200 pb-2">Condiciones</h2>
-                        <div className="space-y-5">
-                            <div>
-                                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Salario Mínimo (€)</label>
-                                <input type="text" className="w-full border-2 border-gray-300 rounded-xl p-3 font-bold text-gray-700 outline-none focus:border-blue-700"
-                                    value={formData.salario_min} onChange={e => setFormData({ ...formData, salario_min: formatVisualNumber(e.target.value) })} />
+                    {/* Lateral de Control */}
+                    <div className="space-y-8">
+                        <div className="bg-white rounded-[2.5rem] border-2 border-blue-100 p-8 shadow-sm h-fit sticky top-24">
+                            <h2 className="text-xl font-black mb-8 uppercase tracking-tight border-b-2 border-slate-50 pb-4">Ajustes</h2>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Salario Mínimo (€)</label>
+                                    <div className="relative">
+                                        <input type="text" className="w-full border-2 border-slate-100 bg-slate-50/50 rounded-2xl p-4 font-black text-slate-700 outline-none focus:border-blue-600 transition-all pl-10"
+                                            value={formData.salario_min} onChange={e => setFormData({ ...formData, salario_min: formatVisualNumber(e.target.value) })} />
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-300">€</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Salario Máximo (€)</label>
+                                    <div className="relative">
+                                        <input type="text" className="w-full border-2 border-slate-100 bg-slate-50/50 rounded-2xl p-4 font-black text-slate-700 outline-none focus:border-blue-600 transition-all pl-10"
+                                            value={formData.salario_max} onChange={e => setFormData({ ...formData, salario_max: formatVisualNumber(e.target.value) })} />
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-300">€</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Estado de Publicación</label>
+                                    <select className="w-full border-2 border-slate-100 bg-slate-50/50 rounded-2xl p-4 font-black text-slate-700 outline-none focus:border-blue-600 transition-all appearance-none"
+                                        value={formData.estado} onChange={e => setFormData({ ...formData, estado: e.target.value })}>
+                                        <option value="activa">Activa</option>
+                                        <option value="pausada">Pausada</option>
+                                        <option value="finalizada">Finalizada</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div>
-                                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Salario Máximo (€)</label>
-                                <input type="text" className="w-full border-2 border-gray-300 rounded-xl p-3 font-bold text-gray-700 outline-none focus:border-blue-700"
-                                    value={formData.salario_max} onChange={e => setFormData({ ...formData, salario_max: formatVisualNumber(e.target.value) })} />
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Estado</label>
-                                <select className="w-full border-2 border-gray-300 rounded-xl p-3 font-bold text-gray-700 bg-white"
-                                    value={formData.estado} onChange={e => setFormData({ ...formData, estado: e.target.value })}>
-                                    <option value="activa">🟢 Activa</option>
-                                    <option value="pausada">🟡 Pausada</option>
-                                    <option value="finalizada">🔴 Finalizada</option>
-                                </select>
-                            </div>
+
+                            <button
+                                form="edit-form"
+                                type="submit"
+                                disabled={saving}
+                                className="w-full mt-10 bg-blue-600 text-white py-5 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-blue-700 hover:-translate-y-1 transition-all shadow-xl shadow-blue-100 disabled:bg-slate-200 disabled:shadow-none active:scale-95 flex items-center justify-center gap-3 border-2 border-blue-700"
+                            >
+                                {saving ? (
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                    <>
+                                        <Save size={18} strokeWidth={3} />
+                                        Guardar Cambios
+                                    </>
+                                )}
+                            </button>
                         </div>
-                        <button form="edit-form" type="submit" disabled={saving}
-                            className="w-full mt-8 bg-blue-700 text-white py-4 rounded-xl font-black hover:bg-blue-800 transition active:scale-[0.98]">
-                            <Save className="w-5 h-5 inline mr-2" /> {saving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
-                        </button>
                     </div>
+
                 </div>
             </div>
         </div>
