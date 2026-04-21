@@ -3,51 +3,17 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Building2, Users, Briefcase, TrendingUp, Eye, Edit, Trash2, Plus, BarChart3 } from 'lucide-react';
+import { Users, Eye, Edit, Trash2, Plus, BarChart3, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
-
-// --- INTERFACES ---
-interface Oferta {
-  id: number;
-  titulo: string;
-  descripcion: string;
-  salario_min?: number;
-  salario_max?: number;
-  tipo_contrato: string;
-  sector?: string;
-  estado?: string;
-  postulaciones?: number;
-  empresa: {
-    nombre_comercial: string;
-  };
-  tecnologias: Array<{ nombre: string }>;
-  created_at: string;
-}
-
-interface Postulacion {
-  id: number;
-  estado: string;
-  fecha_postulacion: string;
-  oferta: {
-    titulo: string;
-  };
-  alumno: {
-    nombre: string;
-    email: string;
-  };
-}
+import { motion } from 'framer-motion';
 
 export default function Dashboard() {
   const { user, userType, token } = useAuth();
   const router = useRouter();
-  const [ofertas, setOfertas] = useState<Oferta[]>([]);
-  const [postulaciones, setPostulaciones] = useState<Postulacion[]>([]);
-  const [stats, setStats] = useState({
-    totalOfertas: 0,
-    totalPostulaciones: 0,
-    activas: 0,
-  });
+  const [ofertas, setOfertas] = useState<any[]>([]);
+  const [postulaciones, setPostulaciones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ total: 0, activas: 0, candidatos: 0 });
 
   useEffect(() => {
     if (!user || userType !== 'empresa') {
@@ -55,257 +21,169 @@ export default function Dashboard() {
       return;
     }
     fetchData();
-  }, [user, userType, router]);
+  }, [user, userType]);
 
   const fetchData = async () => {
     try {
-      // 1. Ejecución paralela para mejorar velocidad
       const [ofertasRes, postulacionesRes] = await Promise.all([
         fetch('http://localhost:8000/api/mis-ofertas', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
+          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
         }),
         fetch('http://localhost:8000/api/postulaciones-mis-ofertas', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
+          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
         })
       ]);
 
       const oJson = await ofertasRes.json();
       const pJson = await postulacionesRes.json();
 
-      // 2. Extracción segura de arrays (soporta {data: []} o [])
-      const listaOfertas = Array.isArray(oJson) ? oJson : (oJson.data || []);
-      const listaPostulaciones = Array.isArray(pJson) ? pJson : (pJson.data || []);
+      // Extracción segura de arrays según la estructura de Laravel
+      const listaOfertas = Array.isArray(oJson) ? oJson : (oJson.data || oJson.ofertas || []);
+      const listaPostulaciones = Array.isArray(pJson) ? pJson : (pJson.data || pJson.postulaciones || []);
 
       setOfertas(listaOfertas);
       setPostulaciones(listaPostulaciones);
 
-      // 3. Cálculo de estadísticas basado en los datos reales procesados
       setStats({
-        totalOfertas: listaOfertas.length,
-        totalPostulaciones: listaPostulaciones.length,
-        activas: listaOfertas.filter((o: Oferta) => o.estado === 'activa' || !o.estado).length,
+        total: listaOfertas.length,
+        activas: listaOfertas.filter((o: any) => o.estado === 'activa' || !o.estado).length,
+        candidatos: listaPostulaciones.length
       });
 
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error sincronizando panel:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const deleteOferta = async (id: number) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta oferta?')) return;
-
+    if (!confirm('¿Seguro que quieres eliminar esta vacante permanentemente?')) return;
     try {
-      const response = await fetch(`http://localhost:8000/api/ofertas/${id}`, {
+      const res = await fetch(`http://localhost:8000/api/ofertas/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        }
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
       });
-
-      if (response.ok) {
-        const nuevasOfertas = ofertas.filter(oferta => oferta.id !== id);
-        setOfertas(nuevasOfertas);
-        setStats(prev => ({
-          ...prev,
-          totalOfertas: nuevasOfertas.length,
-          activas: nuevasOfertas.filter(o => o.estado === 'activa' || !o.estado).length
-        }));
-      }
+      if (res.ok) fetchData();
     } catch (error) {
-      console.error('Error deleting oferta:', error);
+      console.error('Error al eliminar:', error);
     }
   };
 
-  if (!user || userType !== 'empresa') {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] pt-24 flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-3xl shadow-xl">
-          <p className="text-red-600 font-bold mb-4">Acceso Restringido</p>
-          <Link href="/">
-            <button className="bg-indigo-600 text-white px-8 py-3 rounded-xl hover:bg-indigo-700 transition-all font-semibold">
-              Volver al inicio
+  if (loading) return (
+    <div className="min-h-screen bg-[#F0F7FF] flex items-center justify-center">
+      <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#F0F7FF] pt-24 pb-12">
+      <div className="max-w-7xl mx-auto px-6">
+
+        {/* Header Principal */}
+        <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+              Panel de {user?.nombre_comercial || 'Empresa'}
+            </h1>
+            <p className="text-slate-500 font-medium mt-1 text-lg">Gestiona tus vacantes y revisa candidatos.</p>
+          </div>
+          <Link href="/crear-oferta">
+            <button className="flex items-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all uppercase text-sm tracking-widest">
+              <Plus size={20} strokeWidth={3} />
+              Nueva Oferta
             </button>
           </Link>
         </div>
-      </div>
-    );
-  }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] pt-24 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500 font-medium italic">Sincronizando panel de control...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-12">
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">
-            Dashboard — {user.nombre_comercial}
-          </h1>
-          <p className="text-gray-500 font-medium">Gestión integral de vacantes y candidatos activos.</p>
-        </div>
-
-        {/* Estadísticas con sombras reforzadas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        {/* Tarjetas de Estadísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           {[
-            { label: 'Total Ofertas', val: stats.totalOfertas, icon: BarChart3, color: 'text-indigo-600' },
-            { label: 'Ofertas Activas', val: stats.activas, icon: Eye, color: 'text-green-600' },
-            { label: 'Postulaciones', val: stats.totalPostulaciones, icon: Users, color: 'text-blue-600' },
-            {
-              label: 'Tasa Respuesta',
-              val: `${stats.totalOfertas > 0 ? Math.round((stats.totalPostulaciones / stats.totalOfertas) * 100) : 0}%`,
-              icon: TrendingUp,
-              color: 'text-orange-600'
-            }
-          ].map((item, idx) => (
-            <div key={idx} className="bg-white rounded-[2rem] shadow-md border border-gray-100 p-7">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">{item.label}</p>
-                  <p className={`text-3xl font-black ${item.color}`}>{item.val}</p>
-                </div>
-                <item.icon className={`${item.color} opacity-20`} size={44} />
+            { label: 'Ofertas Totales', val: stats.total, icon: BarChart3, color: 'text-blue-600' },
+            { label: 'Vacantes Activas', val: stats.activas, icon: Eye, color: 'text-emerald-600' },
+            { label: 'Candidatos Totales', val: stats.candidatos, icon: Users, color: 'text-blue-600' }
+          ].map((item, i) => (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+              key={i}
+              className="bg-white rounded-[2rem] shadow-xl shadow-blue-900/5 border border-blue-50 p-7 flex items-center justify-between"
+            >
+              <div>
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">{item.label}</p>
+                <p className={`text-4xl font-black ${item.color}`}>{item.val}</p>
               </div>
-            </div>
+              <item.icon className={`${item.color} opacity-20`} size={48} />
+            </motion.div>
           ))}
         </div>
 
-        {/* Acción Principal */}
-        <div className="mb-10">
-          <Link href="/crear-oferta">
-            <button className="flex items-center gap-3 bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all">
-              <Plus size={22} strokeWidth={3} />
-              Crear Nueva Oferta
-            </button>
-          </Link>
-        </div>
-
-        {/* Tabla de Ofertas */}
-        <div className="bg-white rounded-[2.5rem] shadow-md border border-gray-100 overflow-hidden mb-10">
-          <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
-            <h2 className="text-xl font-bold text-gray-900">Mis Ofertas Publicadas</h2>
+        {/* Tabla de Vacantes */}
+        <div className="bg-white rounded-[2.5rem] shadow-xl shadow-blue-900/5 border border-blue-50 overflow-hidden">
+          <div className="px-8 py-6 border-b border-blue-50 bg-white flex justify-between items-center">
+            <h2 className="text-xl font-black text-slate-900">Mis Vacantes Publicadas</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="text-left text-gray-400 uppercase text-[10px] font-black tracking-widest border-b border-gray-100">
-                  <th className="px-8 py-5">Título de la posición</th>
-                  <th className="px-8 py-5">Contrato</th>
-                  <th className="px-8 py-5">Estado</th>
-                  <th className="px-8 py-5 text-center">Candidatos</th>
-                  <th className="px-8 py-5 text-right">Gestión</th>
+                <tr className="text-slate-400 uppercase text-[10px] font-black tracking-widest border-b border-blue-50">
+                  <th className="px-8 py-5">Posición y Contrato</th>
+                  <th className="px-8 py-5 text-center">Estado</th>
+                  <th className="px-8 py-5 text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
-                {ofertas.length > 0 ? (
-                  ofertas.map((oferta) => (
-                    <tr key={oferta.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="px-8 py-5 font-bold text-gray-800">{oferta.titulo}</td>
-                      <td className="px-8 py-5 text-sm text-gray-500 font-medium">{oferta.tipo_contrato}</td>
-                      <td className="px-8 py-5 text-sm">
-                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight ${oferta.estado === 'activa' || !oferta.estado
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-yellow-100 text-yellow-700'
-                          }`}>
-                          {oferta.estado || 'activa'}
-                        </span>
-                      </td>
-                      <td className="px-8 py-5 text-center font-black text-gray-700">
-                        {postulaciones.filter(p => p.oferta?.titulo === oferta.titulo).length}
-                      </td>
-                      <td className="px-8 py-5">
-                        <div className="flex justify-end gap-3">
-                          <Link href={`/dashboard/ofertas/${oferta.id}`}>
-                            <button className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition shadow-sm">
-                              <Eye size={18} />
-                            </button>
-                          </Link>
-                          <Link href={`/dashboard/ofertas/${oferta.id}/editar`}>
-                            <button className="p-2.5 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 transition shadow-sm">
-                              <Edit size={18} />
-                            </button>
-                          </Link>
-                          <button
-                            onClick={() => deleteOferta(oferta.id)}
-                            className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition shadow-sm"
-                          >
-                            <Trash2 size={18} />
+              <tbody className="divide-y divide-blue-50">
+                {ofertas.length > 0 ? ofertas.map((o) => (
+                  <tr key={o.id} className="hover:bg-blue-50/40 transition-colors group">
+                    <td className="px-8 py-5">
+                      <p className="font-bold text-slate-800 text-lg leading-tight group-hover:text-blue-600 transition-colors">
+                        {o.titulo}
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-black uppercase mt-1">
+                        {o.tipo_contrato || 'No especificado'}
+                      </p>
+                    </td>
+                    <td className="px-8 py-5 text-center">
+                      <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${o.estado === 'activa' || !o.estado ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                        {o.estado || 'activa'}
+                      </span>
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="flex justify-end gap-2">
+                        {/* BOTÓN VER (EL OJO) */}
+                        <Link href={`/dashboard/ofertas/${o.id}`} title="Ver detalles">
+                          <button className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                            <Eye size={18} />
                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
+                        </Link>
+
+                        {/* BOTÓN EDITAR */}
+                        <Link href={`/dashboard/ofertas/${o.id}/editar`} title="Editar vacante">
+                          <button className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                            <Edit size={18} />
+                          </button>
+                        </Link>
+
+                        {/* BOTÓN ELIMINAR */}
+                        <button
+                          onClick={() => deleteOferta(o.id)}
+                          title="Eliminar vacante"
+                          className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
                   <tr>
-                    <td colSpan={5} className="px-8 py-16 text-center text-gray-400 italic">
-                      No se han encontrado ofertas registradas.
+                    <td colSpan={3} className="px-8 py-20 text-center text-slate-400 font-medium italic">
+                      Aún no has publicado ninguna oferta de empleo.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
-          </div>
-        </div>
-
-        {/* Postulaciones Recibidas */}
-        <div className="bg-white rounded-[2.5rem] shadow-md border border-gray-100 overflow-hidden">
-          <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
-            <h2 className="text-xl font-bold text-gray-900">Últimas Postulaciones</h2>
-          </div>
-          <div className="p-8">
-            {postulaciones.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                <p className="text-gray-400 font-medium">Aún no has recibido postulaciones en tus ofertas activas.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {postulaciones.map((postulacion) => (
-                  <div key={postulacion.id} className="border border-gray-100 rounded-3xl p-6 hover:shadow-lg hover:border-indigo-100 transition-all group">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-black text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors">
-                          {postulacion.alumno.nombre}
-                        </h3>
-                        <p className="text-gray-400 text-sm font-medium mb-4">{postulacion.alumno.email}</p>
-
-                        <div className="space-y-2">
-                          <p className="text-xs text-gray-500 uppercase font-black tracking-widest">Postulación a:</p>
-                          <p className="text-sm font-bold text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg inline-block">
-                            {postulacion.oferta?.titulo}
-                          </p>
-                        </div>
-                        <p className="text-[11px] text-gray-400 mt-4 font-bold uppercase">
-                          Fecha: {new Date(postulacion.fecha_postulacion).toLocaleDateString('es-ES')}
-                        </p>
-                      </div>
-                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${postulacion.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
-                        postulacion.estado === 'aceptada' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                        {postulacion.estado}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>

@@ -116,4 +116,25 @@ class OfertaController extends Controller
             $oferta->delete();
         return response()->json(['message' => 'Eliminada']);
     }
+
+    public function misOfertas(Request $request): JsonResponse
+    {
+        try {
+            // Obtenemos el ID del usuario autenticado (la empresa)
+            $empresaId = auth()->id();
+
+            // Buscamos solo las ofertas que pertenecen a esta empresa
+            $ofertas = Oferta::where('empresa_id', $empresaId)
+                ->with(['tecnologias']) // Cargamos las tecnologías para que no de error
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json($ofertas);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al obtener tus ofertas',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

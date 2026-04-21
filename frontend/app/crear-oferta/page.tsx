@@ -3,298 +3,207 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, X } from 'lucide-react';
+import { ArrowLeft, Save, Briefcase, MapPin, DollarSign, FileText, Tag, Users, Check } from 'lucide-react';
 import Link from 'next/link';
 
-interface Tecnologia {
-  id: number;
-  nombre: string;
-}
+const COMUNIDADES = [
+  "Andalucía", "Aragón", "Asturias", "Baleares", "Canarias", "Cantabria",
+  "Castilla-La Mancha", "Castilla y León", "Cataluña", "Comunidad Valenciana",
+  "Extremadura", "Galicia", "Madrid", "Murcia", "Navarra", "País Vasco", "La Rioja", "Remoto"
+];
+
+const TECNOLOGIAS_LISTA = [
+  'React', 'Next.js', 'Vue.js', 'Angular', 'Svelte', 'Tailwind CSS',
+  'Bootstrap', 'TypeScript', 'JavaScript', 'HTML5', 'CSS3', 'Laravel',
+  'Node.js', 'Python', 'Django', 'Express', 'Go', 'Ruby on Rails',
+  'PHP', 'Java', 'Spring Boot', 'NestJS', 'PostgreSQL', 'MySQL',
+  'MongoDB', 'Redis', 'SQLite', 'Docker', 'Kubernetes', 'Git',
+  'GitHub Actions', 'AWS', 'Firebase', 'Vercel', 'React Native',
+  'Flutter', 'Swift', 'Kotlin', 'GraphQL'
+];
 
 export default function CrearOferta() {
   const { user, userType, token } = useAuth();
   const router = useRouter();
-  const [tecnologias, setTecnologias] = useState<Tecnologia[]>([]);
   const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     titulo: '',
     descripcion: '',
     salario_min: '',
     salario_max: '',
     tipo_contrato: 'Tiempo completo',
-    ubicacion: '',
-    tecnologias: [] as number[]
+    ubicacion: 'Madrid',
+    vacantes: '1',
   });
+
+  const [tecnologias, setTecnologias] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user || userType !== 'empresa') {
       router.push('/auth');
-      return;
     }
-    fetchTecnologias();
-  }, [user, userType, router]);
+  }, [user, userType]);
 
-  const fetchTecnologias = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/api/tecnologias', {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setTecnologias(data.data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching tecnologias:', error);
-    }
+  const formatVisualNumber = (val: string) => {
+    if (!val) return "";
+    const cleanNumber = val.replace(/\D/g, "");
+    return new Intl.NumberFormat('de-DE').format(parseInt(cleanNumber));
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleSalarioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleTecnologiaToggle = (tecnologiaId: number) => {
-    setFormData(prev => ({
-      ...prev,
-      tecnologias: prev.tecnologias.includes(tecnologiaId)
-        ? prev.tecnologias.filter(id => id !== tecnologiaId)
-        : [...prev.tecnologias, tecnologiaId]
-    }));
+    const numericValue = value.replace(/\D/g, "");
+    setFormData(prev => ({ ...prev, [name]: numericValue }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Validación frontend
-    if (formData.tecnologias.length === 0) {
-      alert('Debes seleccionar al menos una tecnología requerida.');
-      setLoading(false);
-      return;
-    }
+    const body = {
+      ...formData,
+      vacantes: parseInt(formData.vacantes) || 1,
+      salario_min: formData.salario_min ? parseInt(formData.salario_min) : null,
+      salario_max: formData.salario_max ? parseInt(formData.salario_max) : null,
+      tecnologias: tecnologias,
+      sector: 'Tecnología',
+      requisitos: 'Consultar descripción',
+      estado: 'activa'
+    };
 
     try {
-      const ofertaData = {
-        titulo: formData.titulo,
-        descripcion: formData.descripcion,
-        salario_min: formData.salario_min ? parseInt(formData.salario_min) : null,
-        salario_max: formData.salario_max ? parseInt(formData.salario_max) : null,
-        tipo_contrato: formData.tipo_contrato,
-        ubicacion: formData.ubicacion,
-        tecnologias: formData.tecnologias
-      };
-
-      const response = await fetch('http://localhost:8000/api/ofertas', {
+      const res = await fetch('http://localhost:8000/api/ofertas', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify(ofertaData)
+        body: JSON.stringify(body)
       });
 
-      if (response.ok) {
+      if (res.ok) {
         router.push('/dashboard');
+        router.refresh();
       } else {
-        const errorData = await response.json();
-        alert('Error al crear la oferta: ' + (errorData.message || 'Error desconocido'));
+        alert("Error al crear la oferta.");
       }
-    } catch (error) {
-      console.error('Error creating oferta:', error);
-      alert('Error al crear la oferta. Inténtalo de nuevo.');
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
   };
 
-  if (!user || userType !== 'empresa') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  const inputStyles = "w-full px-6 py-4 bg-white border-2 border-blue-100 rounded-2xl focus:border-blue-600 outline-none transition-all text-gray-800 font-medium shadow-sm shadow-blue-50/50";
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Volver al Dashboard
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Crear Nueva Oferta de Empleo</h1>
-          <p className="text-gray-600">Publica una nueva oportunidad laboral para tu empresa</p>
-        </div>
+    <div className="min-h-screen bg-[#F0F7FF] pt-24 pb-12 font-sans">
+      <div className="max-w-5xl mx-auto px-6">
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Título */}
-            <div className="md:col-span-2">
-              <label htmlFor="titulo" className="block text-sm font-medium text-gray-700 mb-2">
-                Título de la Oferta *
-              </label>
-              <input
-                type="text"
-                id="titulo"
-                name="titulo"
-                required
-                value={formData.titulo}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ej: Desarrollador Full Stack Senior"
-              />
+        <Link href="/dashboard" className="inline-flex items-center text-sm font-bold text-blue-600 hover:text-blue-800 mb-6 uppercase tracking-tight">
+          <ArrowLeft className="w-4 h-4 mr-2" /> Volver al panel
+        </Link>
+
+        <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-10">Publicar Nueva Oferta</h1>
+
+        <form id="crear-oferta-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white rounded-[2.5rem] shadow-xl border border-blue-50 p-8 md:p-10">
+              <div className="space-y-8">
+                <div>
+                  <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 mb-4">
+                    <Briefcase size={14} className="text-blue-600" /> Título
+                  </label>
+                  <input type="text" required value={formData.titulo}
+                    onChange={e => setFormData({ ...formData, titulo: e.target.value })}
+                    className={inputStyles + " font-bold"} placeholder="Ej: Fullstack Developer" />
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 mb-4">
+                    <FileText size={14} className="text-blue-600" /> Descripción
+                  </label>
+                  <textarea required rows={10} value={formData.descripcion}
+                    onChange={e => setFormData({ ...formData, descripcion: e.target.value })}
+                    className={inputStyles + " resize-none"} />
+                </div>
+              </div>
             </div>
 
-            {/* Descripción */}
-            <div className="md:col-span-2">
-              <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-2">
-                Descripción *
+            <div className="bg-white rounded-[2.5rem] shadow-xl border border-blue-50 p-8 md:p-10">
+              <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 mb-6">
+                <Tag size={14} className="text-blue-600" /> Tecnologías
               </label>
-              <textarea
-                id="descripcion"
-                name="descripcion"
-                required
-                rows={6}
-                value={formData.descripcion}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Describe las responsabilidades, requisitos y beneficios de la posición..."
-              />
+              <div className="flex flex-wrap gap-2">
+                {TECNOLOGIAS_LISTA.map(t => (
+                  <button key={t} type="button"
+                    onClick={() => setTecnologias(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])}
+                    className={`px-4 py-2 rounded-xl font-bold text-xs border-2 transition-all flex items-center gap-2 ${tecnologias.includes(t) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-100 text-gray-400 hover:border-blue-200'
+                      }`}>
+                    {t} {tecnologias.includes(t) && <Check size={12} />}
+                  </button>
+                ))}
+              </div>
             </div>
+          </div>
 
-            {/* Salario Mínimo */}
-            <div>
-              <label htmlFor="salario_min" className="block text-sm font-medium text-gray-700 mb-2">
-                Salario Mínimo (€)
-              </label>
-              <input
-                type="number"
-                id="salario_min"
-                name="salario_min"
-                value={formData.salario_min}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="25000"
-                min="0"
-              />
-            </div>
+          <div className="space-y-6">
+            <div className="bg-white rounded-[2.5rem] shadow-xl border border-blue-50 p-8 sticky top-24">
+              <h3 className="text-lg font-black text-slate-900 mb-6">Condiciones</h3>
 
-            {/* Salario Máximo */}
-            <div>
-              <label htmlFor="salario_max" className="block text-sm font-medium text-gray-700 mb-2">
-                Salario Máximo (€)
-              </label>
-              <input
-                type="number"
-                id="salario_max"
-                name="salario_max"
-                value={formData.salario_max}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="35000"
-                min="0"
-              />
-            </div>
+              <div className="space-y-6">
+                <div>
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 mb-2">
+                    <MapPin size={12} className="text-blue-600" /> Ubicación
+                  </label>
+                  <select
+                    value={formData.ubicacion}
+                    onChange={e => setFormData({ ...formData, ubicacion: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-blue-50 rounded-xl font-bold text-sm bg-white outline-none focus:border-blue-600"
+                  >
+                    {COMUNIDADES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
 
-            {/* Tipo de Contrato */}
-            <div>
-              <label htmlFor="tipo_contrato" className="block text-sm font-medium text-gray-700 mb-2">
-                Tipo de Contrato *
-              </label>
-              <select
-                id="tipo_contrato"
-                name="tipo_contrato"
-                required
-                value={formData.tipo_contrato}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Mín (€)</label>
+                    <input type="text"
+                      value={formatVisualNumber(formData.salario_min)}
+                      onChange={handleSalarioChange}
+                      className="w-full px-4 py-3 border-2 border-blue-50 rounded-xl font-bold text-sm" placeholder="20.000" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Máx (€)</label>
+                    <input type="text"
+                      value={formatVisualNumber(formData.salario_max)}
+                      onChange={handleSalarioChange}
+                      className="w-full px-4 py-3 border-2 border-blue-50 rounded-xl font-bold text-sm" placeholder="45.000" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 mb-2">
+                    <Users size={12} className="text-blue-600" /> Vacantes
+                  </label>
+                  <input type="number" min="1" value={formData.vacantes}
+                    onChange={e => setFormData({ ...formData, vacantes: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-blue-50 rounded-xl font-bold text-sm" />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                form="crear-oferta-form"
+                disabled={loading}
+                className="w-full mt-10 py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all disabled:opacity-50"
               >
-                <option value="Tiempo completo">Tiempo completo</option>
-                <option value="Tiempo parcial">Tiempo parcial</option>
-                <option value="Contrato temporal">Contrato temporal</option>
-                <option value="Freelance">Freelance</option>
-                <option value="Prácticas">Prácticas</option>
-              </select>
+                {loading ? 'Publicando...' : 'Publicar Ahora'}
+              </button>
             </div>
-
-            {/* Ubicación */}
-            <div>
-              <label htmlFor="ubicacion" className="block text-sm font-medium text-gray-700 mb-2">
-                Ubicación
-              </label>
-              <input
-                type="text"
-                id="ubicacion"
-                name="ubicacion"
-                value={formData.ubicacion}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ej: Madrid, España"
-              />
-            </div>
-          </div>
-
-          {/* Tecnologías */}
-          <div className="mt-8">
-            <label className="block text-sm font-medium text-gray-700 mb-4">
-              Tecnologías Requeridas *
-            </label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {tecnologias.map((tecnologia) => (
-                <label key={tecnologia.id} className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.tecnologias.includes(tecnologia.id)}
-                    onChange={() => handleTecnologiaToggle(tecnologia.id)}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">{tecnologia.nombre}</span>
-                </label>
-              ))}
-            </div>
-            {tecnologias.length === 0 && (
-              <p className="text-sm text-gray-500 mt-2">Cargando tecnologías...</p>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="mt-8 flex justify-end space-x-4">
-            <Link
-              href="/dashboard"
-              className="px-6 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition"
-            >
-              Cancelar
-            </Link>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creando...
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5 mr-2" />
-                  Crear Oferta
-                </>
-              )}
-            </button>
           </div>
         </form>
       </div>
