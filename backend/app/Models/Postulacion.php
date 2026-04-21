@@ -8,14 +8,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Postulacion extends Model
 {
     protected $table = 'POSTULACION';
-    
+
+    // Desactivamos los timestamps estándar si prefieres usar tus propias columnas de fecha
+    public $timestamps = false;
+
     protected $fillable = [
         'alumno_id',
         'oferta_id',
         'estado',
         'carta_presentacion',
-        'fecha_respuesta',
         'fecha_postulacion',
+        'fecha_respuesta',
     ];
 
     protected $casts = [

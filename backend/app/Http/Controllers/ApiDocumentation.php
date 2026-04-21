@@ -8,7 +8,7 @@ use OpenApi\Annotations as OA;
  * @OA\Info(
  * title="ConectorTalento API",
  * version="1.0.0",
- * description="API para el portal de empleo ConectorTalento - gestión de ofertas, postulaciones y perfil profesional",
+ * description="API para el portal de empleo ConectorTalento - Gestión de ofertas, postulaciones y analíticas de mercado.",
  * contact=@OA\Contact(
  * name="Equipo ConectorTalento",
  * email="support@conectortalento.com"
@@ -19,12 +19,12 @@ use OpenApi\Annotations as OA;
  * )
  * * @OA\Server(
  * url="http://localhost:8000/api",
- * description="Development server"
+ * description="Servidor de Desarrollo"
  * )
  * * @OA\SecurityScheme(
  * type="http",
- * description="Login con email y password para obtener el token",
- * name="Token based authentication",
+ * description="Autenticación basada en Sanctum. Introduce tu token Bearer.",
+ * name="Authorization",
  * in="header",
  * scheme="bearer",
  * bearerFormat="JWT",
@@ -54,43 +54,6 @@ class ApiDocumentation
      */
 
     /**
-     * @OA\Post(
-     * path="/login-alumno",
-     * summary="Login para alumno",
-     * tags={"Autenticación"},
-     * @OA\RequestBody(
-     * required=true,
-     * @OA\JsonContent(
-     * required={"email","password"},
-     * @OA\Property(property="email", type="string", format="email", example="juan@example.com"),
-     * @OA\Property(property="password", type="string", format="password", example="password123")
-     * )
-     * ),
-     * @OA\Response(response=200, description="Login exitoso"),
-     * @OA\Response(response=401, description="Credenciales inválidas")
-     * )
-     */
-
-    /**
-     * @OA\Post(
-     * path="/register-empresa",
-     * summary="Registrar nueva empresa",
-     * tags={"Autenticación"},
-     * @OA\RequestBody(
-     * required=true,
-     * @OA\JsonContent(
-     * required={"nombre_comercial","email","password","password_confirmation"},
-     * @OA\Property(property="nombre_comercial", type="string", example="Tech Company SL"),
-     * @OA\Property(property="email", type="string", format="email", example="info@techcompany.com"),
-     * @OA\Property(property="password", type="string", format="password", example="password123"),
-     * @OA\Property(property="password_confirmation", type="string", format="password", example="password123")
-     * )
-     * ),
-     * @OA\Response(response=201, description="Empresa registrada exitosamente")
-     * )
-     */
-
-    /**
      * @OA\Get(
      * path="/ofertas",
      * summary="Listar todas las ofertas activas",
@@ -102,21 +65,15 @@ class ApiDocumentation
      * required=false,
      * @OA\Schema(type="string")
      * ),
-     * @OA\Parameter(
-     * name="tipo_contrato",
-     * in="query",
-     * description="Filtrar por tipo de contrato",
-     * required=false,
-     * @OA\Schema(type="string", enum={"Tiempo completo", "Tiempo parcial", "Contrato temporal", "Freelance", "Prácticas"})
-     * ),
-     * @OA\Response(response=200, description="Lista de ofertas paginada")
+     * @OA\Response(response=200, description="Lista de ofertas con sus empresas y tecnologías")
      * )
      */
 
     /**
      * @OA\Post(
      * path="/ofertas",
-     * summary="Crear nueva oferta (solo empresas)",
+     * summary="Crear o Actualizar oferta (Solo Empresas)",
+     * description="Nota: El salario se limpia de puntos automáticamente. Las tecnologías se envían como nombres.",
      * tags={"Ofertas"},
      * security={{"sanctum":{}}},
      * @OA\RequestBody(
@@ -124,44 +81,42 @@ class ApiDocumentation
      * @OA\JsonContent(
      * required={"titulo","descripcion","tipo_contrato"},
      * @OA\Property(property="titulo", type="string", example="Desarrollador Fullstack"),
-     * @OA\Property(property="descripcion", type="string", example="Buscamos experto en Laravel y Next.js"),
-     * @OA\Property(property="tipo_contrato", type="string", enum={"Tiempo completo", "Tiempo parcial", "Contrato temporal", "Freelance", "Prácticas"}),
-     * @OA\Property(property="ubicacion", type="string", example="Madrid, España"),
-     * @OA\Property(property="salario_min", type="number", example=30000),
-     * @OA\Property(property="salario_max", type="number", example=45000),
-     * @OA\Property(property="vacantes", type="integer", example=1),
-     * @OA\Property(property="tecnologias", type="array", @OA\Items(type="integer", example=1))
+     * @OA\Property(property="descripcion", type="string", example="Experto en Laravel y React"),
+     * @OA\Property(property="tipo_contrato", type="string", example="Tiempo completo"),
+     * @OA\Property(property="salario_min", type="string", example="30.000"),
+     * @OA\Property(property="salario_max", type="string", example="45.000"),
+     * @OA\Property(property="tecnologias", type="array", @OA\Items(type="string", example="React")),
+     * @OA\Property(property="estado", type="string", example="activa")
      * )
      * ),
-     * @OA\Response(response=201, description="Oferta creada exitosamente")
+     * @OA\Response(response=201, description="Oferta procesada correctamente")
      * )
      */
 
     /**
      * @OA\Post(
      * path="/postulaciones",
-     * summary="Postularse a una oferta (solo alumnos)",
+     * summary="Postularse a una oferta (Solo Alumnos)",
      * tags={"Postulaciones"},
      * security={{"sanctum":{}}},
      * @OA\RequestBody(
      * required=true,
      * @OA\JsonContent(
      * required={"oferta_id"},
-     * @OA\Property(property="oferta_id", type="integer", example=5),
-     * @OA\Property(property="carta_presentacion", type="string", example="Me gustaría aplicar porque...")
+     * @OA\Property(property="oferta_id", type="integer", example=1),
+     * @OA\Property(property="carta_presentacion", type="string", example="Texto de motivación o resumen.")
      * )
      * ),
-     * @OA\Response(response=201, description="Postulación enviada exitosamente")
+     * @OA\Response(response=201, description="Postulación registrada")
      * )
      */
 
     /**
      * @OA\Get(
-     * path="/mis-ofertas",
-     * summary="Ver ofertas publicadas por la empresa",
-     * tags={"Ofertas"},
-     * security={{"sanctum":{}}},
-     * @OA\Response(response=200, description="Lista de mis ofertas")
+     * path="/tendencias",
+     * summary="Obtener datos para gráficas",
+     * tags={"Analíticas"},
+     * @OA\Response(response=200, description="Histórico de demanda por tecnología")
      * )
      */
 }

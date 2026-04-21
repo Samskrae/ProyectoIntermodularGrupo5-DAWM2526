@@ -3,9 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
 class Empresa extends Authenticatable
 {
@@ -13,42 +12,19 @@ class Empresa extends Authenticatable
 
     protected $table = 'EMPRESA';
 
-    protected $fillable = ['nombre_comercial', 'sector', 'contacto', 'email', 'password'];
+    // Solo lo que me has pedido: nombre_comercial, sector, email y password
+    protected $fillable = [
+        'nombre_comercial',
+        'sector',
+        'email',
+        'password'
+    ];
+
     protected $hidden = ['password'];
 
+    // Relación con las ofertas (Importante para que la empresa gestione sus vacantes)
     public function ofertas()
     {
-        return $this->hasMany(OfertaEmpleo::class, 'empresa_id');
-    }
-
-    // Métodos de autenticación requeridos
-    public function getAuthIdentifierName()
-    {
-        return 'id';
-    }
-
-    public function getAuthIdentifier()
-    {
-        return $this->getKey();
-    }
-
-    public function getAuthPassword()
-    {
-        return $this->password;
-    }
-
-    public function getRememberToken()
-    {
-        return $this->remember_token;
-    }
-
-    public function setRememberToken($value)
-    {
-        $this->remember_token = $value;
-    }
-
-    public function getRememberTokenName()
-    {
-        return 'remember_token';
+        return $this->hasMany(Oferta::class, 'empresa_id');
     }
 }

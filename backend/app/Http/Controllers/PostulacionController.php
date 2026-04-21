@@ -3,16 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Postulacion;
-use App\Models\OfertaEmpleo;
+use App\Models\Oferta;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Database\QueryException;
 
 class PostulacionController extends Controller
 {
-    /**
-     * Postularse a una oferta
-     */
     public function store(Request $request): JsonResponse
     {
         $request->validate([
@@ -20,10 +16,9 @@ class PostulacionController extends Controller
             'carta_presentacion' => 'nullable|string',
         ]);
 
-        // Verificar que el alumno está autenticado
         $alumno = auth()->user();
-        if (!$alumno || !($alumno instanceof \App\Models\Alumno)) {
-            return response()->json(['error' => 'Solo alumnos pueden postularse'], 403);
+        if (!$alumno) {
+            return response()->json(['error' => 'No autenticado'], 401);
         }
 
         try {
@@ -32,125 +27,73 @@ class PostulacionController extends Controller
                 'oferta_id' => $request->oferta_id,
                 'carta_presentacion' => $request->carta_presentacion,
                 'estado' => 'pendiente',
+                'fecha_postulacion' => now(), // <-- Aquí se guarda tu fecha
             ]);
 
             return response()->json(['data' => $postulacion], 201);
-        } catch (QueryException $e) {
-            if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
+        } catch (\Exception $e) {
+            // Código 23000 suele ser para duplicados en SQL
+            if (isset($e->errorInfo) && $e->errorInfo[1] == 1062) {
                 return response()->json(['error' => 'Ya te has postulado a esta oferta'], 409);
             }
-            throw $e;
+            return response()->json(['error' => 'Error al procesar: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Ver mis postulaciones
-     */
     public function misPostulaciones(): JsonResponse
     {
         $alumno = auth()->user();
-        if (!$alumno || !($alumno instanceof \App\Models\Alumno)) {
-            return response()->json(['error' => 'No autorizado'], 403);
-        }
 
         $postulaciones = Postulacion::where('alumno_id', $alumno->id)
-            ->with('oferta.empresa')
-            ->orderBy('fecha_postulacion', 'desc')
+            ->with(['oferta.empresa', 'oferta.tecnologias'])
+            ->orderBy('fecha_postulacion', 'desc') // <-- Ordenado por tu fecha
             ->get();
 
         return response()->json(['data' => $postulaciones]);
     }
 
-    /**
-     * Ver postulaciones a mis ofertas (solo empresas)
-     */
     public function postulacionesAMisOfertas(): JsonResponse
     {
         $empresa = auth()->user();
-        if (!$empresa) {
-            return response()->json(['error' => 'No autorizado'], 401);
-        }
 
         $postulaciones = Postulacion::whereHas('oferta', function ($query) use ($empresa) {
             $query->where('empresa_id', $empresa->id);
         })
-        ->with(['alumno', 'oferta'])
-        ->orderBy('fecha_postulacion', 'desc')
-        ->get();
-
-        return response()->json(['data' => $postulaciones]);
-    }
-
-    /**
-     * Ver postulaciones de una oferta específica
-     */
-    public function porOferta($oferta_id): JsonResponse
-    {
-        $oferta = OfertaEmpleo::find($oferta_id);
-
-        if (!$oferta) {
-            return response()->json(['error' => 'Oferta no encontrada'], 404);
-        }
-
-        $empresa = auth()->user();
-        if (!$empresa || $oferta->empresa_id !== $empresa->id) {
-            return response()->json(['error' => 'No autorizado'], 403);
-        }
-
-        $postulaciones = Postulacion::where('oferta_id', $oferta_id)
-            ->with('alumno')
+            ->with(['alumno', 'oferta'])
             ->orderBy('fecha_postulacion', 'desc')
             ->get();
 
         return response()->json(['data' => $postulaciones]);
     }
 
-    /**
-     * Actualizar estado de postulación
-     */
     public function updateEstado(Request $request, $id): JsonResponse
     {
         $postulacion = Postulacion::with('oferta')->find($id);
 
-        if (!$postulacion) {
-            return response()->json(['error' => 'Postulación no encontrada'], 404);
+        if (!$postulacion || $postulacion->oferta->empresa_id !== auth()->id()) {
+            return response()->json(['error' => 'No autorizado o no encontrada'], 403);
         }
 
-        $empresa = auth()->user();
-        if (!$empresa || $postulacion->oferta->empresa_id !== $empresa->id) {
-            return response()->json(['error' => 'No autorizado'], 403);
-        }
-
-        $request->validate([
-            'estado' => 'required|in:pendiente,aceptada,rechazada,retirada',
-        ]);
+        $request->validate(['estado' => 'required|in:pendiente,aceptada,rechazada,retirada']);
 
         $postulacion->update([
             'estado' => $request->estado,
-            'fecha_respuesta' => now(),
+            'fecha_respuesta' => now(), // Se marca cuando la empresa responde
         ]);
 
         return response()->json(['data' => $postulacion]);
     }
 
-    /**
-     * Retirar postulación
-     */
     public function retirar($id): JsonResponse
     {
         $postulacion = Postulacion::find($id);
 
-        if (!$postulacion) {
-            return response()->json(['error' => 'Postulación no encontrada'], 404);
-        }
-
-        $alumno = auth()->user();
-        if (!$alumno || $postulacion->alumno_id !== $alumno->id) {
+        if (!$postulacion || $postulacion->alumno_id !== auth()->id()) {
             return response()->json(['error' => 'No autorizado'], 403);
         }
 
         $postulacion->update(['estado' => 'retirada']);
 
-        return response()->json(['data' => ['message' => 'Postulación retirada']]);
+        return response()->json(['message' => 'Postulación retirada']);
     }
 }

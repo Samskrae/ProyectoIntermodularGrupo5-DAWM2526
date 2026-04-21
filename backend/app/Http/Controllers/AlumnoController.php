@@ -3,35 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\Alumno;
+use App\Models\Tecnologia;
 use Illuminate\Http\Request;
 
 class AlumnoController extends Controller
 {
     public function index()
     {
-        return response()->json(Alumno::all(), 200);
+        return response()->json(Alumno::with('tecnologias')->get(), 200);
     }
 
     public function show($id)
     {
-        $alumno = Alumno::find($id);
+        $alumno = Alumno::with('tecnologias')->find($id);
         if (!$alumno) {
             return response()->json(['error' => 'Alumno no encontrado'], 404);
         }
         return response()->json($alumno, 200);
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'nombre' => 'required|string',
-            'apellidos' => 'required|string',
-            'estado_academico' => 'nullable|string',
-            'perfil_url' => 'nullable|string',
-        ]);
-
-        $alumno = Alumno::create($validated);
-        return response()->json($alumno, 201);
     }
 
     public function update(Request $request, $id)
@@ -41,25 +29,49 @@ class AlumnoController extends Controller
             return response()->json(['error' => 'Alumno no encontrado'], 404);
         }
 
+        // Validamos solo nombre y el array de nombres de tecnologías
         $validated = $request->validate([
             'nombre' => 'sometimes|string',
-            'apellidos' => 'sometimes|string',
-            'estado_academico' => 'sometimes|nullable|string',
-            'perfil_url' => 'sometimes|nullable|string',
+            'tecnologias' => 'sometimes|array',
         ]);
 
+        // Actualizamos nombre
         $alumno->update($validated);
-        return response()->json($alumno, 200);
+
+        // Sincronizamos tecnologías por nombre
+        if ($request->has('tecnologias')) {
+            $ids = Tecnologia::whereIn('nombre', $request->tecnologias)->pluck('id');
+            $alumno->tecnologias()->sync($ids);
+        }
+
+        return response()->json($alumno->load('tecnologias'), 200);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'nombre' => 'required|string',
+            'email' => 'required|email|unique:ALUMNO,email',
+            'password' => 'required|min:6',
+            'tecnologias' => 'sometimes|array'
+        ]);
+
+        $alumno = Alumno::create($validated);
+
+        if ($request->has('tecnologias')) {
+            $ids = Tecnologia::whereIn('nombre', $request->tecnologias)->pluck('id');
+            $alumno->tecnologias()->sync($ids);
+        }
+
+        return response()->json($alumno->load('tecnologias'), 201);
     }
 
     public function destroy($id)
     {
         $alumno = Alumno::find($id);
-        if (!$alumno) {
-            return response()->json(['error' => 'Alumno no encontrado'], 404);
-        }
-
+        if (!$alumno)
+            return response()->json(['error' => 'No encontrado'], 404);
         $alumno->delete();
-        return response()->json(['mensaje' => 'Alumno eliminado'], 200);
+        return response()->json(['mensaje' => 'Eliminado'], 200);
     }
 }

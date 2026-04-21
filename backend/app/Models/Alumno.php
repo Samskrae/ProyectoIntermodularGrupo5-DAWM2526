@@ -12,13 +12,13 @@ class Alumno extends Authenticatable
 
     protected $table = 'ALUMNO';
 
-    protected $fillable = ['nombre', 'email', 'password', 'apellidos', 'estado_academico', 'perfil_url'];
-    protected $hidden = ['password'];
+    protected $fillable = [
+        'nombre',
+        'email',
+        'password'
+    ];
 
-    public function perfil()
-    {
-        return $this->hasOne(PerfilProfesional::class, 'alumno_id');
-    }
+    protected $hidden = ['password'];
 
     public function postulaciones()
     {
