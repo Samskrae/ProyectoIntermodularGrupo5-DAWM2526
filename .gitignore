@@ -27,12 +27,19 @@ docker-compose.local.yml
 .env.docker.*
 *.volume
 *.data
+# Persistencia de base de datos
+**/mysql_data/
+**/db_data/
+mysql/
 
 ####################################
 # LARAVEL (Backend)
 ####################################
 /backend/vendor/
 /backend/node_modules/
+/backend/public/storage
+/backend/.php_cs.cache
+/backend/.phpunit.cache
 
 /backend/storage/*.key
 /backend/storage/*.log
@@ -63,6 +70,9 @@ docker-compose.local.yml
 /frontend/yarn-debug.log*
 /frontend/yarn-error.log*
 /frontend/pnpm-debug.log*
+/frontend/next-env.d.ts
+/frontend/.eslintcache
+*.tsbuildinfo
 
 ####################################
 # NEXT / FRONTEND ENV

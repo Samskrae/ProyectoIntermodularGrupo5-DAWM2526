@@ -43,7 +43,7 @@ export default function CrearOferta() {
     if (!user || userType !== 'empresa') {
       router.push('/auth');
     }
-  }, [user, userType]);
+  }, [user, userType, router]);
 
   const formatVisualNumber = (val: string) => {
     if (!val) return "";
@@ -99,7 +99,7 @@ export default function CrearOferta() {
   const inputStyles = "w-full px-6 py-4 bg-white border-2 border-blue-100 rounded-2xl focus:border-blue-600 outline-none transition-all text-gray-800 font-medium shadow-sm shadow-blue-50/50";
 
   return (
-    <div className="min-h-screen bg-[#F0F7FF] pt-24 pb-12 font-sans">
+    <div className="min-h-screen bg-[#F0F7FF] pt-24 pb-12 font-sans text-slate-900">
       <div className="max-w-5xl mx-auto px-6">
 
         <Link href="/dashboard" className="inline-flex items-center text-sm font-bold text-blue-600 hover:text-blue-800 mb-6 uppercase tracking-tight">
@@ -171,17 +171,25 @@ export default function CrearOferta() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Mín (€)</label>
-                    <input type="text"
+                    <input
+                      type="text"
+                      name="salario_min"
                       value={formatVisualNumber(formData.salario_min)}
                       onChange={handleSalarioChange}
-                      className="w-full px-4 py-3 border-2 border-blue-50 rounded-xl font-bold text-sm" placeholder="20.000" />
+                      className="w-full px-4 py-3 border-2 border-blue-50 rounded-xl font-bold text-sm outline-none focus:border-blue-600"
+                      placeholder="20.000"
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Máx (€)</label>
-                    <input type="text"
+                    <input
+                      type="text"
+                      name="salario_max"
                       value={formatVisualNumber(formData.salario_max)}
                       onChange={handleSalarioChange}
-                      className="w-full px-4 py-3 border-2 border-blue-50 rounded-xl font-bold text-sm" placeholder="45.000" />
+                      className="w-full px-4 py-3 border-2 border-blue-50 rounded-xl font-bold text-sm outline-none focus:border-blue-600"
+                      placeholder="45.000"
+                    />
                   </div>
                 </div>
 
@@ -191,7 +199,7 @@ export default function CrearOferta() {
                   </label>
                   <input type="number" min="1" value={formData.vacantes}
                     onChange={e => setFormData({ ...formData, vacantes: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-blue-50 rounded-xl font-bold text-sm" />
+                    className="w-full px-4 py-3 border-2 border-blue-50 rounded-xl font-bold text-sm outline-none focus:border-blue-600" />
                 </div>
               </div>
 
@@ -199,9 +207,11 @@ export default function CrearOferta() {
                 type="submit"
                 form="crear-oferta-form"
                 disabled={loading}
-                className="w-full mt-10 py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all disabled:opacity-50"
+                className="w-full mt-10 py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all disabled:bg-slate-200 flex items-center justify-center gap-3"
               >
-                {loading ? 'Publicando...' : 'Publicar Ahora'}
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : 'Publicar Ahora'}
               </button>
             </div>
           </div>
